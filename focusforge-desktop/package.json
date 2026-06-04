@@ -5,19 +5,17 @@
   "main": "main.js",
   "private": true,
   "scripts": {
-    "build:web": "cd .. && pnpm --filter @workspace/focusforge exec vite build --config vite.electron.config.ts",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
-    "dist": "npm run build:web && npm run build:win",
-    "electron:dev": "npm run build:web && electron ."
+    "start": "electron ."
   },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
   },
   "build": {
-    "appId": "com.focusforge.app",
+    "appId": "com.pixel.app",
     "productName": "Pixel",
     "copyright": "Copyright © 2024",
     "directories": {
@@ -25,36 +23,29 @@
     },
     "files": [
       "main.js",
-      "preload.js",
-      "../artifacts/focusforge/dist/electron-web/**/*"
+      "preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "electron-web",
+        "to": "electron-web"
+      }
     ],
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "icons/icon.ico"
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
     },
     "mac": {
-      "target": "dmg",
-      "icon": "icons/icon.icns"
+      "target": "dmg"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "icons/icon.png"
+      "target": "AppImage"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "icons/icon.ico",
-      "uninstallerIcon": "icons/icon.ico",
-      "installerHeaderIcon": "icons/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Pixel"

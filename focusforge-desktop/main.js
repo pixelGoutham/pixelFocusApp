@@ -21,11 +21,11 @@ function createWindow() {
   // Remove default menu bar
   Menu.setApplicationMenu(null);
 
-  // Packaged: web files land in resources/electron-web
-  // Dev (run from project root): artifacts/focusforge/dist/electron-web
+  // Both packaged and dev: electron-web lives next to main.js in focusforge-desktop/
+  // When packaged, electron-builder copies it via extraResources -> resources/electron-web
   const webDir = app.isPackaged
     ? path.join(process.resourcesPath, 'electron-web')
-    : path.join(__dirname, '..', 'artifacts', 'focusforge', 'dist', 'electron-web');
+    : path.join(__dirname, 'electron-web');
   win.loadFile(path.join(webDir, 'index.html'));
 
   // Show window once content is ready (prevents white flash)
