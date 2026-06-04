@@ -21,9 +21,12 @@ function createWindow() {
   // Remove default menu bar
   Menu.setApplicationMenu(null);
 
-  // Load the built web app
-  const indexPath = path.join(__dirname, '..', 'artifacts', 'focusforge', 'dist', 'electron-web', 'index.html');
-  win.loadFile(indexPath);
+  // Packaged: web files land in resources/electron-web
+  // Dev (run from project root): artifacts/focusforge/dist/electron-web
+  const webDir = app.isPackaged
+    ? path.join(process.resourcesPath, 'electron-web')
+    : path.join(__dirname, '..', 'artifacts', 'focusforge', 'dist', 'electron-web');
+  win.loadFile(path.join(webDir, 'index.html'));
 
   // Show window once content is ready (prevents white flash)
   win.once('ready-to-show', () => win.show());
