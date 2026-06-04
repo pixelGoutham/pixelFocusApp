@@ -14,7 +14,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
     },
-    title: 'FocusForge',
+    title: 'Pixel',
     show: false, // show only after content loads (no white flash)
   });
 

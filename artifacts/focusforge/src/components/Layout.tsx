@@ -48,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   exit={{ opacity: 0, width: 0 }}
                   className="font-bold text-lg tracking-tight"
                 >
-                  FocusForge
+                  Pixel
                 </motion.span>
               )}
             </AnimatePresence>
@@ -159,7 +159,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Topbar */}
         <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 z-10 sticky top-0">
           <h1 className="font-semibold text-lg tracking-tight">
-            {activeItem?.label || 'FocusForge'}
+            {activeItem?.label || 'Pixel'}
           </h1>
           <div className="text-sm font-medium text-muted-foreground tabular-nums">
             {format(new Date(), 'EEEE, d MMMM yyyy • HH:mm')}
@@ -167,8 +167,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto p-6 bg-background relative">
-          {children}
+        <main className="flex-1 overflow-auto bg-background relative flex flex-col">
+          <div className="flex-1 p-6">
+            {children}
+          </div>
+          <footer className="flex-shrink-0 border-t border-border py-2 px-6 flex items-center justify-center">
+            <p className="text-xs text-muted-foreground">
+              made with ❤️ by <span className="text-primary font-medium">Pixel for bot</span>
+            </p>
+          </footer>
         </main>
       </div>
     </div>

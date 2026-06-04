@@ -34,7 +34,7 @@ export default function Onboarding() {
             <div className="flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-2">
               <Zap className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Welcome to FocusForge</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Welcome to Pixel</h1>
             <p className="text-sm text-muted-foreground text-center">
               Your offline productivity OS. Study. Plan. Focus. Achieve.
             </p>

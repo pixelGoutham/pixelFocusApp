@@ -1,7 +1,7 @@
 {
   "name": "focusforge-desktop",
   "version": "1.0.0",
-  "description": "FocusForge — offline productivity OS for students",
+  "description": "Pixel — offline productivity OS for students",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
   },
   "build": {
     "appId": "com.focusforge.app",
-    "productName": "FocusForge",
+    "productName": "Pixel",
     "copyright": "Copyright © 2024",
     "directories": {
       "output": "release"
@@ -57,7 +57,7 @@
       "installerHeaderIcon": "icons/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "FocusForge"
+      "shortcutName": "Pixel"
     }
   }
 }
