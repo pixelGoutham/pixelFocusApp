@@ -1,36 +1,52 @@
-# [Project name]
+# FocusForge
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A fully offline productivity OS for students — built as a React+Vite web app. No login, no cloud, no backend. All data stored in localforage (IndexedDB). Export/import via a single JSON backup file.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/focusforge run dev` — run the FocusForge web app (via workflow)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (not used by FocusForge)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- React 19 + Vite, Tailwind CSS v4, shadcn/ui components
+- State: localforage (IndexedDB, no backend)
+- Charts: recharts
+- Routing: wouter
+- Animations: framer-motion
+- CSV parsing: papaparse
+- Dates: date-fns
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/focusforge/src/lib/store.ts` — data types + localforage CRUD
+- `artifacts/focusforge/src/lib/StoreContext.tsx` — React context + seed data
+- `artifacts/focusforge/src/components/Layout.tsx` — collapsible sidebar shell
+- `artifacts/focusforge/src/pages/` — all 11 pages (Dashboard, Calendar, Tasks, Matrix, Pomodoro, Stopwatch, Analytics, StudyPlanner, MockTests, Flashcards, Settings)
+
+## Features
+
+- **Dashboard** — study time stats, today's schedule, daily goal ring, heatmap, upcoming tasks
+- **Calendar** — weekly grid view, click-to-add tasks, CSV import (Date,Start,End,Subject,Task,Priority)
+- **Tasks** — filterable task list, add/edit/delete, priority & quadrant assignment
+- **Eisenhower Matrix** — drag-and-drop tasks between quadrants
+- **Pomodoro** — 25/5 timer with ring animation, session logging, audio ping, per-subject tracking
+- **Stopwatch** — lap timer, study session logging
+- **Analytics** — bar/pie charts, 28-day heatmap, weekly goal progress, subject breakdown
+- **Study Planner** — weekly hour planning grid, generate from tasks
+- **Mock Tests** — score tracking, trend line chart, subject breakdown
+- **Flashcards** — spaced repetition (hard/medium/easy), review mode + browse mode
+- **Settings** — profile, pomodoro defaults, JSON export/import backup, clear all data
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- No backend: all data in localforage (IndexedDB). Works offline, no auth needed.
+- CSV import maps Priority field to Eisenhower quadrants automatically.
+- Subject colors are deterministic (rotating palette by insertion order).
+- Seed data injected on first launch (before onboarding is complete).
+- Single JSON backup file exports all tables: tasks, sessions, flashcards, mockTests, settings.
 
 ## User preferences
 
@@ -38,8 +54,6 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Don't import from `@workspace/api-client-react` — there's no backend for FocusForge.
+- `getSubjectColor()` in Dashboard.tsx uses a module-level cache; import it from there.
+- Pomodoro audio requires a user gesture to initialize AudioContext (browser policy).
