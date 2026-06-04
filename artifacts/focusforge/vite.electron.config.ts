@@ -6,8 +6,12 @@ import path from "path";
 // Separate Vite config for Electron builds.
 // Does NOT require PORT or BASE_PATH env vars.
 // Sets base: "./" so assets load correctly from file:// protocol.
+// Sets VITE_ELECTRON so the app switches to hash-based routing.
 export default defineConfig({
   base: "./",
+  define: {
+    "import.meta.env.VITE_ELECTRON": JSON.stringify("true"),
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
