@@ -1,0 +1,63 @@
+{
+  "name": "focusforge-desktop",
+  "version": "1.0.0",
+  "description": "FocusForge — offline productivity OS for students",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build:web": "cd .. && pnpm --filter @workspace/focusforge exec vite build --config vite.electron.config.ts",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "npm run build:web && npm run build:win",
+    "electron:dev": "npm run build:web && electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.focusforge.app",
+    "productName": "FocusForge",
+    "copyright": "Copyright © 2024",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../artifacts/focusforge/dist/electron-web/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icons/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icons/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icons/icon.ico",
+      "uninstallerIcon": "icons/icon.ico",
+      "installerHeaderIcon": "icons/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FocusForge"
+    }
+  }
+}
