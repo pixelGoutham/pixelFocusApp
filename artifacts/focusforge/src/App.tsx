@@ -18,6 +18,8 @@ import MockTests from "@/pages/MockTests";
 import Flashcards from "@/pages/Flashcards";
 import Settings from "@/pages/Settings";
 import Onboarding from "@/pages/Onboarding";
+import Music from "@/pages/Music";
+import Consistency from "@/pages/Consistency";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ function AppRouter() {
         <Route path="/study-planner" component={StudyPlanner} />
         <Route path="/mock-tests" component={MockTests} />
         <Route path="/flashcards" component={Flashcards} />
+        <Route path="/music" component={Music} />
+        <Route path="/consistency" component={Consistency} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

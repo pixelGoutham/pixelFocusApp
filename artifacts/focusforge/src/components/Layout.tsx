@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
-  Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings, Zap
+  Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings, Zap,
+  Music2, TreePine
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,8 @@ const NAV_ITEMS = [
   { href: '/study-planner', label: 'Study Planner', icon: BookOpen },
   { href: '/mock-tests', label: 'Mock Tests', icon: ClipboardList },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
+  { href: '/music', label: 'Music', icon: Music2 },
+  { href: '/consistency', label: 'My Tree', icon: TreePine },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
