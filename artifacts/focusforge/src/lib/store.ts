@@ -1,7 +1,7 @@
 import localforage from 'localforage';
 
 // Configure localforage
-localforage.config({ name: 'focusforge', storeName: 'data' });
+localforage.config({ name: 'pixel', storeName: 'data' });
 
 export interface Task {
   id: string;

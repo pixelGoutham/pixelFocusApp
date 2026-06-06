@@ -1,11 +1,11 @@
-# FocusForge
+# Pixel
 
 A fully offline productivity OS for students — built as a React+Vite web app. No login, no cloud, no backend. All data stored in localforage (IndexedDB). Export/import via a single JSON backup file.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/focusforge run dev` — run the FocusForge web app (via workflow)
-- `pnpm --filter @workspace/api-server run dev` — run the API server (not used by FocusForge)
+- `pnpm --filter @workspace/focusforge run dev` — run the Pixel web app (via workflow)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (not used by Pixel)
 - `pnpm run typecheck` — full typecheck across all packages
 
 ## Stack
@@ -54,6 +54,6 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-- Don't import from `@workspace/api-client-react` — there's no backend for FocusForge.
+- Don't import from `@workspace/api-client-react` — there's no backend for Pixel.
 - `getSubjectColor()` in Dashboard.tsx uses a module-level cache; import it from there.
 - Pomodoro audio requires a user gesture to initialize AudioContext (browser policy).
