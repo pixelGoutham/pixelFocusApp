@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
-  Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings, Zap,
+  Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings,
   Music2, TreePine, X, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,7 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="flex h-14 items-center justify-between px-4 border-b" style={{ borderColor: '#1a1a1a' }}>
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <Zap className="h-6 w-6 text-primary flex-shrink-0" />
+            <img src="/logo.jpg" alt="Pixel" className="h-7 w-7 rounded-full flex-shrink-0 object-cover" />
             <AnimatePresence>
               {!isCollapsed && (
                 <motion.span
