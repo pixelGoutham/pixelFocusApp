@@ -23,10 +23,8 @@
     },
     "files": [
       "main.js",
-      "preload.js",
-      "logo.jpg"
+      "preload.js"
     ],
-    "icon": "logo.jpg",
     "extraResources": [
       {
         "from": "electron-web",

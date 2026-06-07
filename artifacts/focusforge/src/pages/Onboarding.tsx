@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Target, Clock } from "lucide-react";
+import { Zap, Target, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,8 +31,8 @@ export default function Onboarding() {
       >
         <div className="rounded-2xl border border-border bg-card p-10 shadow-2xl">
           <div className="flex flex-col items-center gap-2 mb-8">
-            <div className="h-16 w-16 rounded-2xl overflow-hidden mb-2 shadow-lg">
-              <img src="/logo.jpg" alt="Pixel" className="h-full w-full object-cover" />
+            <div className="flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-2">
+              <Zap className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight">Welcome to Pixel</h1>
             <p className="text-sm text-muted-foreground text-center">
