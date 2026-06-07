@@ -1,18 +1,30 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-// Separate Vite config for Electron builds.
-// Does NOT require PORT or BASE_PATH env vars.
-// Sets base: "./" so assets load correctly from file:// protocol.
-// Sets VITE_ELECTRON so the app switches to hash-based routing.
+// Strip crossorigin attrs and CDN font links from the HTML output.
+// Both break Electron's file:// renderer: crossorigin triggers a CORS check
+// that file:// can't satisfy, silently preventing the JS + CSS from loading.
+function electronHtmlFix(): Plugin {
+  return {
+    name: "electron-html-fix",
+    transformIndexHtml(html: string) {
+      return html
+        .replace(/ crossorigin(="[^"]*")?/g, "")
+        .replace(/<link[^>]*fonts\.googleapis\.com[^>]*>\s*/g, "")
+        .replace(/<link[^>]*fonts\.gstatic\.com[^>]*>\s*/g, "")
+        .replace(/<link[^>]*rel="preconnect"[^>]*>\s*/g, "");
+    },
+  };
+}
+
 export default defineConfig({
   base: "./",
   define: {
     "import.meta.env.VITE_ELECTRON": JSON.stringify("true"),
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), electronHtmlFix()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),

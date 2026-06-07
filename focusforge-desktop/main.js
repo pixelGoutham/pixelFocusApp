@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu } = require('electron');
+const { app, BrowserWindow, shell, Menu, globalShortcut } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -7,31 +7,37 @@ function createWindow() {
     height: 900,
     minWidth: 960,
     minHeight: 640,
-    backgroundColor: '#09090b', // OLED black — prevents white flash on load
+    backgroundColor: '#000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      // sandbox: false — safe because nodeIntegration is false and contextIsolation
+      // is true. Sandbox + file:// blocks crossorigin script/CSS loading (no CORS
+      // headers on file:// responses), causing a black window.
+      sandbox: false,
     },
     title: 'Pixel',
-    show: false, // show only after content loads (no white flash)
+    show: false,
   });
 
-  // Remove default menu bar
   Menu.setApplicationMenu(null);
 
-  // Both packaged and dev: electron-web lives next to main.js in focusforge-desktop/
-  // When packaged, electron-builder copies it via extraResources -> resources/electron-web
   const webDir = app.isPackaged
     ? path.join(process.resourcesPath, 'electron-web')
     : path.join(__dirname, 'electron-web');
   win.loadFile(path.join(webDir, 'index.html'));
 
-  // Show window once content is ready (prevents white flash)
   win.once('ready-to-show', () => win.show());
 
-  // Open external links in system browser, not in Electron
+  // F12 → DevTools (handy for diagnosing issues without a full dev build)
+  win.webContents.on('before-input-event', (_event, input) => {
+    if (input.key === 'F12' && input.type === 'keyDown') {
+      win.webContents.toggleDevTools();
+    }
+  });
+
+  // External links open in the system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http')) {
       shell.openExternal(url);
