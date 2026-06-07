@@ -78,5 +78,9 @@
     "@types/papaparse": "^5.5.2",
     "localforage": "^1.10.0",
     "papaparse": "^5.5.3"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "*",
+    "@rollup/rollup-linux-x64-gnu": "*"
   }
 }
