@@ -417,13 +417,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
-    optionalDependencies:
-      '@rollup/rollup-linux-x64-gnu':
-        specifier: '*'
-        version: 4.60.3
-      '@rollup/rollup-win32-x64-msvc':
-        specifier: '*'
-        version: 4.61.1
 
   artifacts/mockup-sandbox:
     devDependencies:
@@ -1531,11 +1524,6 @@ packages:
     cpu: [x64]
     os: [linux]
     libc: [glibc]
-
-  '@rollup/rollup-win32-x64-msvc@4.61.1':
-    resolution: {integrity: sha512-X+zaP2x+j4RXGfbp/seSoRHWnPxzApilDszisZxbYH5C/jTxFhCtDNdPGZb9lJyYPs24wGxruPF7Y+sIXt9Gzw==}
-    cpu: [x64]
-    os: [win32]
 
   '@scalar/helpers@0.5.2':
     resolution: {integrity: sha512-Pi1GAl8jO6ungmGj2sjDfCfqiBNrKW6HXDZmminV94ybGU/KtRLOqHwd0n9FIhY3j0RYGpGC0VCuniCICfQPHg==}
@@ -4215,9 +4203,6 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
   '@rollup/rollup-linux-x64-gnu@4.60.3':
-    optional: true
-
-  '@rollup/rollup-win32-x64-msvc@4.61.1':
     optional: true
 
   '@scalar/helpers@0.5.2': {}
