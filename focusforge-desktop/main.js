@@ -7,37 +7,42 @@ function createWindow() {
     height: 900,
     minWidth: 960,
     minHeight: 640,
-    backgroundColor: '#09090b', // OLED black — prevents white flash on load
+    backgroundColor: '#000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
     },
     title: 'Pixel',
-    show: false, // show only after content loads (no white flash)
+    show: false,
   });
 
-  // Remove default menu bar
   Menu.setApplicationMenu(null);
 
-  // Both packaged and dev: electron-web lives next to main.js in focusforge-desktop/
-  // When packaged, electron-builder copies it via extraResources -> resources/electron-web
   const webDir = app.isPackaged
     ? path.join(process.resourcesPath, 'electron-web')
     : path.join(__dirname, 'electron-web');
-  win.loadFile(path.join(webDir, 'index.html'));
 
-  // Show window once content is ready (prevents white flash)
+  const indexPath = path.join(webDir, 'index.html');
+  win.loadFile(indexPath);
+
+  // Show when rendered — fallback after 3s in case event misfires
   win.once('ready-to-show', () => win.show());
+  setTimeout(() => { if (!win.isDestroyed() && !win.isVisible()) win.show(); }, 3000);
 
-  // Open external links in system browser, not in Electron
+  // Open external links in system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http')) {
       shell.openExternal(url);
       return { action: 'deny' };
     }
     return { action: 'allow' };
+  });
+
+  // Log load failures to help debug
+  win.webContents.on('did-fail-load', (_e, code, desc) => {
+    console.error('Load failed:', code, desc, indexPath);
+    win.show(); // show anyway so user isn't stuck on black
   });
 }
 
