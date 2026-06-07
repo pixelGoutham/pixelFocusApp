@@ -1,0 +1,111 @@
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\focusforge-desktop> cd artifacts/focusforge
+cd : Cannot find path 'C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\focusforge-desktop\artifacts\focusforge' because it does not 
+exist.
+At line:1 char:1
++ cd artifacts/focusforge
++ ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\Users\pixel\...acts\focusforge:String) [Set-Location], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.SetLocationCommand
+ 
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\focusforge-desktop> cd ..
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus> cd artifacts/focusforge
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge> ls
+
+
+    Directory: C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge
+
+
+Mode                 LastWriteTime         Length Name                                                                                      
+----                 -------------         ------ ----                                                                                      
+d-----        07-06-2026  02:01 PM                .replit-artifact                                                                          
+d-----        07-06-2026  02:01 PM                public                                                                                    
+d-----        07-06-2026  02:01 PM                src                                                                                       
+-a----        07-06-2026  02:01 PM            453 components.json                                                                           
+-a----        07-06-2026  02:01 PM           1262 index.html                                                                                
+-a----        07-06-2026  02:01 PM           2931 package.json                                                                              
+-a----        07-06-2026  02:01 PM            608 tsconfig.json                                                                             
+-a----        07-06-2026  02:01 PM           1836 vite.config.ts                                                                            
+-a----        07-06-2026  02:35 PM            842 vite.electron.config.ts                                                                   
+
+
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge> npx vite build --config vite.electron.config.ts
+vite.electron.config.ts (1:456) [UNRESOLVED_IMPORT] Could not resolve 'vite' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:1:457 ]
+   │
+ 1 │ const __vite_injected_original_dirname = "C:\\Users\\pixel\\OneDrive\\Desktop\\pixelf\\Pixel-Focus\\artifacts\\focusforge";const __vite_injected_original_filename = "C:\\Users\\pixel\\OneDrive\\Desktop\\pixelf\\Pixel-Focus\\artifacts\\focusforge\\vite.electron.config.ts";const __vite_injected_original_import_meta_url = "file:///C:/Users/pixel/OneDrive/Desktop/pixelf/Pixel-Focus/artifacts/focusforge/vite.electron.config.ts";import { defineConfig } from "vite";
+   │                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ───┬──  
+   │                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ╰──── Module not found, treating it as an external dependency
+───╯
+
+vite.electron.config.ts (2:18) [UNRESOLVED_IMPORT] Could not resolve '@vitejs/plugin-react' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:2:19 ]
+   │
+ 2 │ import react from "@vitejs/plugin-react";
+   │                   ───────────┬──────────  
+   │                              ╰──────────── Module not found, treating it as an external dependency
+───╯
+
+vite.electron.config.ts (3:24) [UNRESOLVED_IMPORT] Could not resolve '@tailwindcss/vite' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:3:25 ]
+   │
+ 3 │ import tailwindcss from "@tailwindcss/vite";
+   │                         ─────────┬─────────  
+   │                                  ╰─────────── Module not found, treating it as an external dependency
+───╯
+
+failed to load config from C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge\vite.electron.config.ts
+error during build:
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge\vite.electron.config.ts.timestamp-1780823987610-1a70415ddca278.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:859:18)
+    at defaultResolve (node:internal/modules/esm/resolve:992:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+    at #resolve (node:internal/modules/esm/loader:673:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+PS C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge> npx vite build --config vite.electron.config.ts
+vite.electron.config.ts (1:456) [UNRESOLVED_IMPORT] Could not resolve 'vite' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:1:457 ]
+   │
+ 1 │ const __vite_injected_original_dirname = "C:\\Users\\pixel\\OneDrive\\Desktop\\pixelf\\Pixel-Focus\\artifacts\\focusforge";const __vite_injected_original_filename = "C:\\Users\\pixel\\OneDrive\\Desktop\\pixelf\\Pixel-Focus\\artifacts\\focusforge\\vite.electron.config.ts";const __vite_injected_original_import_meta_url = "file:///C:/Users/pixel/OneDrive/Desktop/pixelf/Pixel-Focus/artifacts/focusforge/vite.electron.config.ts";import { defineConfig } from "vite";
+   │                                      ───┬──  
+   │                                         ╰──── Module not found, treating it as an external dependency
+───╯
+
+vite.electron.config.ts (2:18) [UNRESOLVED_IMPORT] Could not resolve '@vitejs/plugin-react' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:2:19 ]
+   │
+ 2 │ import react from "@vitejs/plugin-react";
+   │                   ───────────┬──────────  
+   │                              ╰──────────── Module not found, treating it as an external dependency
+───╯
+
+vite.electron.config.ts (3:24) [UNRESOLVED_IMPORT] Could not resolve '@tailwindcss/vite' in vite.electron.config.ts
+   ╭─[ vite.electron.config.ts:3:25 ]
+   │
+ 3 │ import tailwindcss from "@tailwindcss/vite";
+   │                         ─────────┬─────────  
+   │                                  ╰─────────── Module not found, treating it as an external dependency
+───╯
+
+failed to load config from C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge\vite.electron.config.ts
+error during build:
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from C:\Users\pixel\OneDrive\Desktop\pixelf\Pixel-Focus\artifacts\focusforge\vite.electron.config.ts.timestamp-1780824090439-8071c8c1ed2be8.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:859:18)
+    at defaultResolve (node:internal/modules/esm/resolve:992:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+    at #resolve (node:internal/modules/esm/loader:673:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+PS C:\Users\pixel\OneDri
