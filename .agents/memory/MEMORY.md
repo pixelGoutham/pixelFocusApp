@@ -1,0 +1,2 @@
+- [Timer persistence](timer-persistence.md) — Pomodoro & Stopwatch state must live in TimerContext (not page-local), persisted to localforage with wall-clock timestamps for background accuracy.
+- [Firebase sync](firebase-sync.md) — Cloud sync is gracefully disabled unless VITE_FIREBASE_* env vars are set; uses anonymous auth + Firestore doc per device ID.

@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { Play, Pause, Flag, RotateCcw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,15 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/StoreContext";
+import { useTimer } from "@/lib/TimerContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getSubjectColor } from "./Dashboard";
-
-interface Lap {
-  lap: number;
-  split: number;
-  total: number;
-}
 
 function fmt(ms: number): string {
   const h = Math.floor(ms / 3600000);
@@ -27,59 +21,35 @@ function fmt(ms: number): string {
 
 export default function Stopwatch() {
   const { tasks, sessions, setSessions } = useStore();
+  const { sw, swElapsed, updateSw, startSw, pauseSw, resetSw } = useTimer();
   const { toast } = useToast();
-  const [elapsed, setElapsed] = useState(0);
-  const [running, setRunning] = useState(false);
-  const [laps, setLaps] = useState<Lap[]>([]);
-  const [lapStart, setLapStart] = useState(0);
-  const [selectedSubject, setSelectedSubject] = useState("");
-  const startRef = useRef(0);
-  const offsetRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
 
   const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
-
-  useEffect(() => {
-    if (running) {
-      startRef.current = Date.now();
-      const tick = () => {
-        setElapsed(offsetRef.current + Date.now() - startRef.current);
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      rafRef.current = requestAnimationFrame(tick);
-    } else {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      offsetRef.current = elapsed;
-    }
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [running]);
+  const laps = sw.laps;
 
   const handleStartStop = () => {
-    if (!running) {
-      startRef.current = Date.now();
+    if (sw.running) {
+      pauseSw();
     } else {
-      offsetRef.current = elapsed;
+      startSw();
     }
-    setRunning(r => !r);
   };
 
   const handleLap = () => {
-    if (!running) return;
-    const lapTime = elapsed - lapStart;
-    setLaps(prev => [...prev, { lap: prev.length + 1, split: lapTime, total: elapsed }]);
-    setLapStart(elapsed);
+    if (!sw.running) return;
+    const lapTime = swElapsed - sw.lapStart;
+    updateSw({
+      laps: [...sw.laps, { lap: sw.laps.length + 1, split: lapTime, total: swElapsed }],
+      lapStart: swElapsed,
+    });
   };
 
   const handleReset = () => {
-    setRunning(false);
-    setElapsed(0);
-    offsetRef.current = 0;
-    setLaps([]);
-    setLapStart(0);
+    resetSw();
   };
 
   const handleSave = () => {
-    const minutes = Math.floor(elapsed / 60000);
+    const minutes = Math.floor(swElapsed / 60000);
     if (minutes < 1) {
       toast({ title: "Too short", description: "Session must be at least 1 minute." });
       return;
@@ -87,11 +57,11 @@ export default function Stopwatch() {
     setSessions(prev => [...prev, {
       id: Date.now().toString(),
       date: format(new Date(), "yyyy-MM-dd"),
-      subject: selectedSubject || "General",
+      subject: sw.selectedSubject || "General",
       durationMinutes: minutes,
       type: "stopwatch",
     }]);
-    toast({ title: "Session logged", description: `${minutes} minutes recorded for ${selectedSubject || "General"}.` });
+    toast({ title: "Session logged", description: `${minutes} minutes recorded for ${sw.selectedSubject || "General"}.` });
     handleReset();
   };
 
@@ -103,7 +73,10 @@ export default function Stopwatch() {
       <Card className="bg-card border-border">
         <CardContent className="p-8 flex flex-col items-center gap-6">
           {/* Subject */}
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+          <Select
+            value={sw.selectedSubject}
+            onValueChange={v => updateSw({ selectedSubject: v })}
+          >
             <SelectTrigger className="w-48" data-testid="select-stopwatch-subject">
               <SelectValue placeholder="Select subject" />
             </SelectTrigger>
@@ -120,29 +93,29 @@ export default function Stopwatch() {
               className="text-6xl font-mono font-bold tabular-nums tracking-tight"
               style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              {fmt(elapsed)}
+              {fmt(swElapsed)}
             </div>
-            {selectedSubject && (
-              <Badge variant="outline" className={cn("mt-2 text-xs border", getSubjectColor(selectedSubject))}>
-                {selectedSubject}
+            {sw.selectedSubject && (
+              <Badge variant="outline" className={cn("mt-2 text-xs border", getSubjectColor(sw.selectedSubject))}>
+                {sw.selectedSubject}
               </Badge>
             )}
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={handleLap} disabled={!running} data-testid="button-lap">
+            <Button variant="outline" size="icon" onClick={handleLap} disabled={!sw.running} data-testid="button-lap">
               <Flag className="h-4 w-4" />
             </Button>
             <Button size="lg" className="px-10 h-12" onClick={handleStartStop} data-testid="button-startstop">
-              {running ? <><Pause className="h-5 w-5 mr-2" />Pause</> : <><Play className="h-5 w-5 mr-2" />Start</>}
+              {sw.running ? <><Pause className="h-5 w-5 mr-2" />Pause</> : <><Play className="h-5 w-5 mr-2" />Start</>}
             </Button>
             <Button variant="outline" size="icon" onClick={handleReset} data-testid="button-reset-sw">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
 
-          {!running && elapsed > 0 && (
+          {!sw.running && swElapsed > 0 && (
             <Button variant="outline" className="gap-2" onClick={handleSave} data-testid="button-save-session">
               <Save className="h-4 w-4" />
               Log as Study Session

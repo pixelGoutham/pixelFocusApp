@@ -6,6 +6,8 @@ import {
   getSettings, saveSettings, DEFAULT_SETTINGS 
 } from './store';
 import { format, addDays } from 'date-fns';
+import { scheduleSync, setupPeriodicSync, syncFromCloud } from './cloudSync';
+import { isFirebaseConfigured } from './firebase';
 
 interface StoreContextType {
   tasks: Task[];
@@ -42,6 +44,12 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadData = async () => {
     setIsLoading(true);
+
+    // Pull from Firebase first if configured and online
+    if (isFirebaseConfigured && navigator.onLine) {
+      await syncFromCloud().catch(() => {});
+    }
+
     const [t, s, f, m, set] = await Promise.all([
       getTasks(),
       getSessions(),
@@ -95,16 +103,21 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     
     setSettingsState(set);
     setIsLoading(false);
+
+    // Setup periodic sync after load
+    setupPeriodicSync();
   };
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setTasks = (newTasks: Task[] | ((prev: Task[]) => Task[])) => {
     setTasksState(prev => {
       const next = typeof newTasks === 'function' ? newTasks(prev) : newTasks;
       saveTasks(next);
+      scheduleSync();
       return next;
     });
   };
@@ -113,6 +126,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setSessionsState(prev => {
       const next = typeof newSessions === 'function' ? newSessions(prev) : newSessions;
       saveSessions(next);
+      scheduleSync();
       return next;
     });
   };
@@ -121,6 +135,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setFlashcardsState(prev => {
       const next = typeof newFlashcards === 'function' ? newFlashcards(prev) : newFlashcards;
       saveFlashcards(next);
+      scheduleSync();
       return next;
     });
   };
@@ -129,6 +144,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setMockTestsState(prev => {
       const next = typeof newMockTests === 'function' ? newMockTests(prev) : newMockTests;
       saveMockTests(next);
+      scheduleSync();
       return next;
     });
   };
@@ -137,6 +153,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setSettingsState(prev => {
       const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
       saveSettings(next);
+      scheduleSync();
       return next;
     });
   };

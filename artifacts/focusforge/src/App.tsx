@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
 import { MusicProvider } from "@/lib/MusicContext";
+import { TimerProvider } from "@/lib/TimerContext";
 import { Layout } from "@/components/Layout";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
@@ -71,17 +72,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <StoreProvider>
-          <MusicProvider>
-            {isElectron ? (
-              <WouterRouter hook={useHashLocation}>
-                <AppRouter />
-              </WouterRouter>
-            ) : (
-              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <AppRouter />
-              </WouterRouter>
-            )}
-          </MusicProvider>
+          <TimerProvider>
+            <MusicProvider>
+              {isElectron ? (
+                <WouterRouter hook={useHashLocation}>
+                  <AppRouter />
+                </WouterRouter>
+              ) : (
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                  <AppRouter />
+                </WouterRouter>
+              )}
+            </MusicProvider>
+          </TimerProvider>
         </StoreProvider>
         <Toaster />
       </TooltipProvider>

@@ -76,6 +76,7 @@
   },
   "dependencies": {
     "@types/papaparse": "^5.5.2",
+    "firebase": "^12.14.0",
     "localforage": "^1.10.0",
     "papaparse": "^5.5.3"
   }

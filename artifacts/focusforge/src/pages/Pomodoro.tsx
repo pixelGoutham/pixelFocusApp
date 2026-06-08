@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { Play, Pause, SkipForward, RotateCcw, Settings2, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/StoreContext";
+import { useTimer, PomodoroPhase } from "@/lib/TimerContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getSubjectColor } from "./Dashboard";
-
-type Phase = "work" | "break" | "longBreak";
+import { useState } from "react";
 
 function playBeep(ctx: AudioContext | null) {
   if (!ctx) return;
@@ -31,24 +31,14 @@ function playBeep(ctx: AudioContext | null) {
 
 export default function Pomodoro() {
   const { tasks, sessions, setSessions, settings, setSettings, setTasks } = useStore();
+  const { pom, pomSecondsLeft, updatePom, startPom, pausePom, resetPom, setPomPhaseCompleteCallback } = useTimer();
   const { toast } = useToast();
-
-  const [phase, setPhase] = useState<Phase>("work");
-  const [secondsLeft, setSecondsLeft] = useState(settings.pomodoroWork * 60);
-  const [running, setRunning] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState(0);
-  const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedTask, setSelectedTask] = useState("");
-  const [autoStart, setAutoStart] = useState(false);
-  const [muted, setMuted] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [workDur, setWorkDur] = useState(settings.pomodoroWork);
-  const [breakDur, setBreakDur] = useState(settings.pomodoroBreak);
-  const [longBreakDur, setLongBreakDur] = useState(settings.pomodoroLongBreak);
+  const [draftWork, setDraftWork] = useState(pom.workDur);
+  const [draftBreak, setDraftBreak] = useState(pom.breakDur);
+  const [draftLong, setDraftLong] = useState(pom.longBreakDur);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-
   const getAudioCtx = () => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -56,88 +46,106 @@ export default function Pomodoro() {
     return audioCtxRef.current;
   };
 
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const todayTasks = tasks.filter(t => t.subject === selectedSubject && !t.completed);
+  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const todayTasks = tasks.filter(t => t.subject === pom.selectedSubject && !t.completed);
   const todaySessions = sessions.filter(s => s.date === todayStr && s.type === "pomodoro");
 
-  const totalSeconds = phase === "work" ? workDur * 60 : phase === "break" ? breakDur * 60 : longBreakDur * 60;
-  const progress = 1 - secondsLeft / totalSeconds;
-  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
-  const ss = String(secondsLeft % 60).padStart(2, "0");
-
+  const totalSeconds = pom.phase === "work" ? pom.workDur * 60 : pom.phase === "break" ? pom.breakDur * 60 : pom.longBreakDur * 60;
+  const progress = 1 - pomSecondsLeft / totalSeconds;
+  const mm = String(Math.floor(pomSecondsLeft / 60)).padStart(2, "0");
+  const ss = String(pomSecondsLeft % 60).padStart(2, "0");
   const r = 110;
   const circumference = 2 * Math.PI * r;
   const strokeOffset = circumference * (1 - progress);
 
-  const advancePhase = useCallback(() => {
-    if (!muted) playBeep(getAudioCtx());
-    if (phase === "work") {
-      const newCount = completedSessions + 1;
-      setCompletedSessions(newCount);
+  // Register phase-complete callback — fires when timer naturally hits 0
+  const onPhaseComplete = useCallback((newPom: typeof pom) => {
+    if (!pom.muted) playBeep(getAudioCtx());
+
+    if (pom.phase === "work") {
       const sessionRecord = {
         id: Date.now().toString(),
         date: todayStr,
-        subject: selectedSubject || "General",
-        durationMinutes: workDur,
+        subject: pom.selectedSubject || "General",
+        durationMinutes: pom.workDur,
         type: "pomodoro" as const,
       };
       setSessions(prev => [...prev, sessionRecord]);
-      if (selectedTask) {
-        setTasks(prev => prev.map(t => t.id === selectedTask ? { ...t, pomodoroSessions: t.pomodoroSessions + 1 } : t));
+
+      if (pom.selectedTask) {
+        setTasks(prev => prev.map(t =>
+          t.id === pom.selectedTask ? { ...t, pomodoroSessions: t.pomodoroSessions + 1 } : t
+        ));
       }
-      // Update streak
+
       const today = format(new Date(), "yyyy-MM-dd");
       if (settings.lastActiveDate !== today) {
         setSettings(prev => ({ ...prev, lastActiveDate: today, currentStreak: prev.currentStreak + 1 }));
       }
-      toast({ title: "Pomodoro complete!", description: `Focus session recorded for ${selectedSubject || "General"}.` });
-      const nextPhase = newCount % 4 === 0 ? "longBreak" : "break";
-      setPhase(nextPhase);
-      setSecondsLeft(nextPhase === "longBreak" ? longBreakDur * 60 : breakDur * 60);
+
+      toast({
+        title: "Pomodoro complete!",
+        description: `Focus session recorded for ${pom.selectedSubject || "General"}.`,
+      });
     } else {
-      setPhase("work");
-      setSecondsLeft(workDur * 60);
+      toast({ title: newPom.phase === "work" ? "Break over — time to focus!" : "Break started!" });
     }
-    setRunning(autoStart);
-  }, [phase, completedSessions, workDur, breakDur, longBreakDur, selectedSubject, selectedTask, autoStart, muted, todayStr]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pom.phase, pom.selectedSubject, pom.selectedTask, pom.workDur, pom.muted, todayStr, settings.lastActiveDate]);
 
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setSecondsLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current!);
-            setRunning(false);
-            advancePhase();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [running, advancePhase]);
+    setPomPhaseCompleteCallback(onPhaseComplete);
+  }, [onPhaseComplete, setPomPhaseCompleteCallback]);
 
-  const handleReset = () => {
-    setRunning(false);
-    setPhase("work");
-    setSecondsLeft(workDur * 60);
-    setCompletedSessions(0);
+  // Sync timer durations from app settings on first mount (if using defaults)
+  useEffect(() => {
+    if (pom.workDur === 25 && settings.pomodoroWork !== 25) {
+      updatePom({
+        workDur: settings.pomodoroWork,
+        breakDur: settings.pomodoroBreak,
+        longBreakDur: settings.pomodoroLongBreak,
+        secondsLeftSnapshot: settings.pomodoroWork * 60,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handlePhaseClick = (p: PomodoroPhase) => {
+    if (pom.running) pausePom();
+    const secs = p === "work" ? pom.workDur : p === "break" ? pom.breakDur : pom.longBreakDur;
+    updatePom({ phase: p, running: false, timerEndTimestamp: null, secondsLeftSnapshot: secs * 60 });
   };
 
   const handleSaveSettings = () => {
-    setSettings(prev => ({ ...prev, pomodoroWork: workDur, pomodoroBreak: breakDur, pomodoroLongBreak: longBreakDur }));
-    setSecondsLeft(workDur * 60);
-    setPhase("work");
+    updatePom({
+      workDur: draftWork,
+      breakDur: draftBreak,
+      longBreakDur: draftLong,
+      phase: "work",
+      running: false,
+      timerEndTimestamp: null,
+      secondsLeftSnapshot: draftWork * 60,
+    });
+    setSettings(prev => ({ ...prev, pomodoroWork: draftWork, pomodoroBreak: draftBreak, pomodoroLongBreak: draftLong }));
     setShowSettings(false);
     toast({ title: "Settings saved" });
   };
 
-  const phaseLabel = phase === "work" ? "Focus" : phase === "break" ? "Short Break" : "Long Break";
-  const phaseColor = phase === "work" ? "hsl(var(--primary))" : phase === "break" ? "hsl(var(--chart-3))" : "hsl(var(--chart-2))";
+  const handleSkip = () => {
+    pausePom();
+    if (pom.phase === "work") {
+      const newCount = pom.completedSessions + 1;
+      const nextPhase = newCount % 4 === 0 ? "longBreak" : "break";
+      const nextSecs = (nextPhase === "longBreak" ? pom.longBreakDur : pom.breakDur) * 60;
+      updatePom({ phase: nextPhase, completedSessions: newCount, secondsLeftSnapshot: nextSecs, timerEndTimestamp: null, running: false });
+    } else {
+      updatePom({ phase: "work", secondsLeftSnapshot: pom.workDur * 60, timerEndTimestamp: null, running: false });
+    }
+  };
+
+  const phaseLabel = pom.phase === "work" ? "Focus" : pom.phase === "break" ? "Short Break" : "Long Break";
+  const phaseColor = pom.phase === "work" ? "hsl(var(--primary))" : pom.phase === "break" ? "hsl(var(--chart-3))" : "hsl(var(--chart-2))";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -147,13 +155,12 @@ export default function Pomodoro() {
           <Card className="bg-card border-border">
             <CardContent className="p-8 flex flex-col items-center gap-6">
               <div className="flex gap-2">
-                {(["work", "break", "longBreak"] as Phase[]).map(p => (
+                {(["work", "break", "longBreak"] as PomodoroPhase[]).map(p => (
                   <button
                     key={p}
-                    data-testid={`phase-btn-${p}`}
-                    onClick={() => { setPhase(p); setRunning(false); setSecondsLeft((p === "work" ? workDur : p === "break" ? breakDur : longBreakDur) * 60); }}
+                    onClick={() => handlePhaseClick(p)}
                     className={cn("px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                      phase === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      pom.phase === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
                     {p === "work" ? "Focus" : p === "break" ? "Short Break" : "Long Break"}
@@ -173,31 +180,31 @@ export default function Pomodoro() {
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeOffset}
-                    style={{ transition: "stroke-dashoffset 1s linear" }}
+                    style={{ transition: "stroke-dashoffset 0.5s linear" }}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-5xl font-mono font-bold tabular-nums">{mm}:{ss}</span>
                   <span className="text-sm text-muted-foreground mt-1">{phaseLabel}</span>
-                  {selectedSubject && <span className="text-xs text-primary mt-1">{selectedSubject}</span>}
+                  {pom.selectedSubject && <span className="text-xs text-primary mt-1">{pom.selectedSubject}</span>}
                 </div>
               </div>
 
               {/* Controls */}
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={handleReset} data-testid="button-reset">
+                <Button variant="outline" size="icon" onClick={resetPom} data-testid="button-reset">
                   <RotateCcw className="h-4 w-4" />
                 </Button>
                 <Button
                   size="lg"
                   className="px-10 h-12"
-                  onClick={() => setRunning(r => !r)}
+                  onClick={() => pom.running ? pausePom() : startPom()}
                   data-testid="button-play-pause"
                 >
-                  {running ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-                  {running ? "Pause" : "Start"}
+                  {pom.running ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
+                  {pom.running ? "Pause" : "Start"}
                 </Button>
-                <Button variant="outline" size="icon" onClick={advancePhase} data-testid="button-skip">
+                <Button variant="outline" size="icon" onClick={handleSkip} data-testid="button-skip">
                   <SkipForward className="h-4 w-4" />
                 </Button>
               </div>
@@ -206,22 +213,26 @@ export default function Pomodoro() {
               <div className="flex gap-2">
                 {Array.from({ length: 4 }, (_, i) => (
                   <div key={i} className={cn("h-3 w-3 rounded-full border-2 transition-colors",
-                    i < (completedSessions % 4) ? "bg-primary border-primary" : "border-muted-foreground"
+                    i < (pom.completedSessions % 4) ? "bg-primary border-primary" : "border-muted-foreground"
                   )} />
                 ))}
               </div>
 
-              <p className="text-xs text-muted-foreground">{completedSessions} sessions completed today</p>
+              <p className="text-xs text-muted-foreground">{pom.completedSessions} sessions completed today</p>
 
               <div className="flex items-center gap-6 text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <Switch checked={autoStart} onCheckedChange={setAutoStart} data-testid="switch-autostart" />
+                  <Switch
+                    checked={pom.autoStart}
+                    onCheckedChange={v => updatePom({ autoStart: v })}
+                    data-testid="switch-autostart"
+                  />
                   <span className="text-muted-foreground text-xs">Auto-start next</span>
                 </label>
-                <button onClick={() => setMuted(m => !m)} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                <button onClick={() => updatePom({ muted: !pom.muted })} className="text-muted-foreground hover:text-foreground transition-colors">
+                  {pom.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </button>
-                <button onClick={() => setShowSettings(s => !s)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={() => { setDraftWork(pom.workDur); setDraftBreak(pom.breakDur); setDraftLong(pom.longBreakDur); setShowSettings(s => !s); }} className="text-muted-foreground hover:text-foreground transition-colors">
                   <Settings2 className="h-4 w-4" />
                 </button>
               </div>
@@ -230,9 +241,9 @@ export default function Pomodoro() {
                 <div className="w-full border border-border rounded-lg p-4 space-y-3">
                   <p className="text-sm font-semibold">Timer Settings</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <div><Label className="text-xs">Work (min)</Label><Input type="number" value={workDur} onChange={e => setWorkDur(Number(e.target.value))} className="h-8 text-sm" /></div>
-                    <div><Label className="text-xs">Break (min)</Label><Input type="number" value={breakDur} onChange={e => setBreakDur(Number(e.target.value))} className="h-8 text-sm" /></div>
-                    <div><Label className="text-xs">Long Break</Label><Input type="number" value={longBreakDur} onChange={e => setLongBreakDur(Number(e.target.value))} className="h-8 text-sm" /></div>
+                    <div><Label className="text-xs">Work (min)</Label><Input type="number" value={draftWork} onChange={e => setDraftWork(Number(e.target.value))} className="h-8 text-sm" /></div>
+                    <div><Label className="text-xs">Break (min)</Label><Input type="number" value={draftBreak} onChange={e => setDraftBreak(Number(e.target.value))} className="h-8 text-sm" /></div>
+                    <div><Label className="text-xs">Long Break</Label><Input type="number" value={draftLong} onChange={e => setDraftLong(Number(e.target.value))} className="h-8 text-sm" /></div>
                   </div>
                   <Button size="sm" onClick={handleSaveSettings} data-testid="button-save-settings">Save Settings</Button>
                 </div>
@@ -248,14 +259,17 @@ export default function Pomodoro() {
               <CardTitle className="text-sm">Select Subject & Task</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Select value={selectedSubject} onValueChange={v => { setSelectedSubject(v); setSelectedTask(""); }}>
+              <Select
+                value={pom.selectedSubject}
+                onValueChange={v => updatePom({ selectedSubject: v, selectedTask: "" })}
+              >
                 <SelectTrigger data-testid="select-subject"><SelectValue placeholder="Select subject" /></SelectTrigger>
                 <SelectContent>
                   {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {selectedSubject && (
-                <Select value={selectedTask} onValueChange={setSelectedTask}>
+              {pom.selectedSubject && (
+                <Select value={pom.selectedTask} onValueChange={v => updatePom({ selectedTask: v })}>
                   <SelectTrigger data-testid="select-task"><SelectValue placeholder="Select task (optional)" /></SelectTrigger>
                   <SelectContent>
                     {todayTasks.map(t => <SelectItem key={t.id} value={t.id}>{t.task}</SelectItem>)}
