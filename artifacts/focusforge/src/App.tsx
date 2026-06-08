@@ -18,7 +18,6 @@ import Stopwatch from "@/pages/Stopwatch";
 import Analytics from "@/pages/Analytics";
 import StudyPlanner from "@/pages/StudyPlanner";
 import MockTests from "@/pages/MockTests";
-import Flashcards from "@/pages/Flashcards";
 import Settings from "@/pages/Settings";
 import Onboarding from "@/pages/Onboarding";
 import Music from "@/pages/Music";
@@ -56,7 +55,6 @@ function AppRouter() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/study-planner" component={StudyPlanner} />
         <Route path="/mock-tests" component={MockTests} />
-        <Route path="/flashcards" component={Flashcards} />
         <Route path="/music" component={Music} />
         <Route path="/consistency" component={Consistency} />
         <Route path="/settings" component={Settings} />

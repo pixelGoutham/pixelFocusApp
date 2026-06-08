@@ -1,41 +1,41 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { Plus, Trash2, BookOpen, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useStore } from "@/lib/StoreContext";
+import { Subject } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const PALETTE = [
-  "#7C3AED", "#06B6D4", "#22C55E", "#F59E0B", "#EF4444", "#3B82F6", "#EC4899", "#F97316"
+  "#7C3AED", "#06B6D4", "#22C55E", "#F59E0B", "#EF4444", "#3B82F6", "#EC4899", "#F97316",
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function StudyPlanner() {
-  const { tasks } = useStore();
+  const { tasks, settings, setSettings } = useStore();
   const { toast } = useToast();
-
-  // Subject management
-  const [subjects, setSubjects] = useState<{ name: string; color: string }[]>(() => {
-    const unique = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
-    return unique.map((name, i) => ({ name, color: PALETTE[i % PALETTE.length] }));
-  });
-  const [newSubject, setNewSubject] = useState("");
-  const [newColor, setNewColor] = useState(PALETTE[0]);
-
-  // Planner grid: subject x day => planned hours
-  const [plan, setPlan] = useState<Record<string, Record<string, number>>>({});
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  const [subjects, setSubjects] = useState<Subject[]>(() => settings.subjects ?? []);
+  const [newSubject, setNewSubject] = useState("");
+  const [newColor, setNewColor] = useState(PALETTE[0]);
+  const [plan, setPlan] = useState<Record<string, Record<string, number>>>(() => settings.studyPlan ?? {});
+
+  // Keep settings in sync whenever subjects or plan change
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, subjects, studyPlan: plan }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjects, plan]);
+
   const addSubject = () => {
     if (!newSubject.trim()) return;
-    if (subjects.some(s => s.name === newSubject.trim())) return;
+    if (subjects.some(s => s.name.toLowerCase() === newSubject.trim().toLowerCase())) return;
     setSubjects(prev => [...prev, { name: newSubject.trim(), color: newColor }]);
     setNewSubject("");
     setNewColor(PALETTE[(subjects.length + 1) % PALETTE.length]);
@@ -59,6 +59,18 @@ export default function StudyPlanner() {
 
   const generateFromTasks = () => {
     const newPlan: Record<string, Record<string, number>> = {};
+
+    // Ensure any task subjects exist in subjects list
+    const existingNames = new Set(subjects.map(s => s.name));
+    const newSubjects = [...subjects];
+    tasks.forEach(task => {
+      if (task.subject && !existingNames.has(task.subject)) {
+        existingNames.add(task.subject);
+        newSubjects.push({ name: task.subject, color: PALETTE[newSubjects.length % PALETTE.length] });
+      }
+    });
+    if (newSubjects.length !== subjects.length) setSubjects(newSubjects);
+
     tasks.forEach(task => {
       const dayStr = task.date;
       const dayObj = new Date(dayStr + "T00:00:00");
@@ -103,6 +115,9 @@ export default function StudyPlanner() {
                 </button>
               </div>
             ))}
+            {subjects.length === 0 && (
+              <p className="text-xs text-muted-foreground py-1">No subjects yet — add one below.</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="h-8 w-8 rounded border border-border cursor-pointer bg-transparent" />
@@ -126,7 +141,7 @@ export default function StudyPlanner() {
           {subjects.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Add subjects to start planning your week.</p>
+              <p className="text-sm">Add subjects above to start planning your week.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -5,7 +5,7 @@ import {
   getFlashcards, saveFlashcards, getMockTests, saveMockTests,
   getSettings, saveSettings, DEFAULT_SETTINGS,
 } from './store';
-import { format, addDays } from 'date-fns';
+// date-fns no longer needed here after removing seed data
 import {
   scheduleSync, setupPeriodicSync, syncToCloud,
   fetchFromCloud, restoreFromSnapshot, setCurrentUser,
@@ -69,41 +69,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const seedIfNeeded = async () => {
-    const [t, set] = await Promise.all([getTasks(), getSettings()]);
-    if (!set.onboardingDone && t.length === 0) {
-      const today = new Date();
-      const todayStr     = format(today, 'yyyy-MM-dd');
-      const tomorrowStr  = format(addDays(today, 1), 'yyyy-MM-dd');
-      const yesterdayStr = format(addDays(today, -1), 'yyyy-MM-dd');
-      const seedTasks: Task[] = [
-        { id: 't1', date: todayStr,     startTime: '09:00', endTime: '10:30', subject: 'Physics',   task: 'Kinematics practice',    priority: 'High',   quadrant: 'urgent-important',         completed: false, pomodoroSessions: 0, createdAt: today.toISOString() },
-        { id: 't2', date: todayStr,     startTime: '11:00', endTime: '12:00', subject: 'Chemistry', task: 'Organic nomenclature',   priority: 'Medium', quadrant: 'not-urgent-important',     completed: false, pomodoroSessions: 0, createdAt: today.toISOString() },
-        { id: 't3', date: tomorrowStr,  startTime: '14:00', endTime: '16:00', subject: 'Maths',     task: 'Calculus integration',   priority: 'High',   quadrant: 'urgent-important',         completed: false, pomodoroSessions: 0, createdAt: today.toISOString() },
-      ];
-      const seedSessions: StudySession[] = [
-        { id: 's1', date: yesterdayStr, subject: 'Physics',   durationMinutes: 120, type: 'pomodoro' },
-        { id: 's2', date: todayStr,     subject: 'Chemistry', durationMinutes: 60,  type: 'manual'   },
-      ];
-      const seedFlashcards: Flashcard[] = [
-        { id: 'f1', front: "Newton's Second Law", back: 'F = ma',   subject: 'Physics',   nextReview: todayStr, difficulty: 'medium', reviewCount: 0 },
-        { id: 'f2', front: 'Derivative of sin(x)', back: 'cos(x)',  subject: 'Maths',     nextReview: todayStr, difficulty: 'easy',   reviewCount: 0 },
-        { id: 'f3', front: 'Atomic number of Carbon', back: '6',    subject: 'Chemistry', nextReview: todayStr, difficulty: 'easy',   reviewCount: 0 },
-      ];
-      const seedMockTests: MockTest[] = [
-        { id: 'm1', name: 'Midterm 1', subject: 'Physics', score: 85, totalQuestions: 50, date: yesterdayStr, notes: 'Struggled with optics' },
-      ];
-      await Promise.all([
-        saveTasks(seedTasks), saveSessions(seedSessions),
-        saveFlashcards(seedFlashcards), saveMockTests(seedMockTests),
-      ]);
-      setTasksState(seedTasks);
-      setSessionsState(seedSessions);
-      setFlashcardsState(seedFlashcards);
-      setMockTestsState(seedMockTests);
-    } else {
-      await loadLocal();
-    }
-    setSettingsState(await getSettings());
+    await loadLocal();
   };
 
   const loadData = async () => {

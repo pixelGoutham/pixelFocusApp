@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
-  Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings, Zap,
+  Timer, Clock, BarChart3, BookOpen, ClipboardList, Settings, Zap,
   Music2, TreePine, X, ExternalLink, Cloud, LogIn,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,6 @@ const NAV_ITEMS = [
   { href: '/analytics',     label: 'Analytics',    icon: BarChart3 },
   { href: '/study-planner', label: 'Study Planner',icon: BookOpen },
   { href: '/mock-tests',    label: 'Mock Tests',   icon: ClipboardList },
-  { href: '/flashcards',    label: 'Flashcards',   icon: Layers },
   { href: '/music',         label: 'Music',        icon: Music2 },
   { href: '/consistency',   label: 'My Tree',      icon: TreePine },
 ];

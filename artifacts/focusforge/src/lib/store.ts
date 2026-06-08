@@ -45,6 +45,11 @@ export interface MockTest {
   notes: string;
 }
 
+export interface Subject {
+  name: string;
+  color: string;
+}
+
 export interface AppSettings {
   userName: string;
   pomodoroWork: number;
@@ -54,6 +59,8 @@ export interface AppSettings {
   currentStreak: number;
   lastActiveDate: string;
   onboardingDone: boolean;
+  subjects: Subject[];
+  studyPlan: Record<string, Record<string, number>>; // subjectName -> "yyyy-MM-dd" -> hours
 }
 
 // Storage keys
@@ -99,9 +106,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   currentStreak: 0,
   lastActiveDate: '',
   onboardingDone: false,
+  subjects: [],
+  studyPlan: {},
 };
-export const getSettings = async (): Promise<AppSettings> =>
-  (await localforage.getItem<AppSettings>(KEYS.settings)) ?? DEFAULT_SETTINGS;
+export const getSettings = async (): Promise<AppSettings> => {
+  const saved = await localforage.getItem<AppSettings>(KEYS.settings);
+  if (!saved) return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...saved };
+};
 export const saveSettings = (s: AppSettings) => localforage.setItem(KEYS.settings, s);
 
 // Export all data as JSON blob for backup
