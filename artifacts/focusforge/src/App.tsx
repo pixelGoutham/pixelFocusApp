@@ -3,6 +3,7 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/lib/AuthContext";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
 import { MusicProvider } from "@/lib/MusicContext";
 import { TimerProvider } from "@/lib/TimerContext";
@@ -71,21 +72,23 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <StoreProvider>
-          <TimerProvider>
-            <MusicProvider>
-              {isElectron ? (
-                <WouterRouter hook={useHashLocation}>
-                  <AppRouter />
-                </WouterRouter>
-              ) : (
-                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                  <AppRouter />
-                </WouterRouter>
-              )}
-            </MusicProvider>
-          </TimerProvider>
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <TimerProvider>
+              <MusicProvider>
+                {isElectron ? (
+                  <WouterRouter hook={useHashLocation}>
+                    <AppRouter />
+                  </WouterRouter>
+                ) : (
+                  <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                    <AppRouter />
+                  </WouterRouter>
+                )}
+              </MusicProvider>
+            </TimerProvider>
+          </StoreProvider>
+        </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

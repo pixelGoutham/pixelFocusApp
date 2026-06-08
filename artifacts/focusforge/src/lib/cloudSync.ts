@@ -1,12 +1,25 @@
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import localforage from 'localforage';
 import { getFirebaseDb, isFirebaseConfigured } from './firebase';
-import { getTasks, getSessions, getFlashcards, getMockTests, getSettings, saveTasks, saveSessions, saveFlashcards, saveMockTests, saveSettings, DEFAULT_SETTINGS } from './store';
+import {
+  getTasks, getSessions, getFlashcards, getMockTests, getSettings,
+  saveTasks, saveSessions, saveFlashcards, saveMockTests, saveSettings,
+  DEFAULT_SETTINGS, Task, StudySession, Flashcard, MockTest, AppSettings,
+} from './store';
 
-export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'offline' | 'unconfigured';
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'offline' | 'unconfigured' | 'signed-out';
+
+export interface CloudSnapshot {
+  tasks: Task[];
+  sessions: StudySession[];
+  flashcards: Flashcard[];
+  mockTests: MockTest[];
+  settings: AppSettings;
+  syncedAt?: string;
+}
 
 let syncStatusListeners: ((s: SyncStatus) => void)[] = [];
-let currentStatus: SyncStatus = isFirebaseConfigured ? 'idle' : 'unconfigured';
+let currentStatus: SyncStatus = isFirebaseConfigured ? 'signed-out' : 'unconfigured';
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 let pendingSync: ReturnType<typeof setTimeout> | null = null;
 
@@ -23,6 +36,8 @@ function setStatus(s: SyncStatus) {
   syncStatusListeners.forEach(fn => fn(s));
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 async function getDeviceId(): Promise<string> {
   let id = await localforage.getItem<string>('pixel_device_id');
   if (!id) {
@@ -32,8 +47,15 @@ async function getDeviceId(): Promise<string> {
   return id;
 }
 
-export async function syncToCloud(): Promise<void> {
+function getDocKey(uid: string | null | undefined): Promise<string> {
+  return uid ? Promise.resolve(uid) : getDeviceId();
+}
+
+// ── Core sync ─────────────────────────────────────────────────────────────────
+
+export async function syncToCloud(uid?: string | null): Promise<void> {
   if (!isFirebaseConfigured) { setStatus('unconfigured'); return; }
+  if (!uid) { setStatus('signed-out'); return; }
   if (!navigator.onLine) { setStatus('offline'); return; }
   const db = getFirebaseDb();
   if (!db) { setStatus('unconfigured'); return; }
@@ -41,18 +63,14 @@ export async function syncToCloud(): Promise<void> {
   setStatus('syncing');
   try {
     const [tasks, sessions, flashcards, mockTests, settings] = await Promise.all([
-      getTasks(), getSessions(), getFlashcards(), getMockTests(), getSettings()
+      getTasks(), getSessions(), getFlashcards(), getMockTests(), getSettings(),
     ]);
-    const deviceId = await getDeviceId();
-    const docRef = doc(db, 'pixel_users', deviceId);
+    const key = await getDocKey(uid);
+    const docRef = doc(db, 'pixel_users', key);
     await setDoc(docRef, {
-      tasks,
-      sessions,
-      flashcards,
-      mockTests,
-      settings,
+      tasks, sessions, flashcards, mockTests, settings,
       syncedAt: serverTimestamp(),
-    }, { merge: false });
+    });
     setStatus('success');
     await localforage.setItem('pixel_last_sync', new Date().toISOString());
   } catch (e) {
@@ -61,53 +79,71 @@ export async function syncToCloud(): Promise<void> {
   }
 }
 
-export async function syncFromCloud(): Promise<boolean> {
-  if (!isFirebaseConfigured) return false;
-  if (!navigator.onLine) return false;
+export async function fetchFromCloud(uid: string): Promise<CloudSnapshot | null> {
+  if (!isFirebaseConfigured || !navigator.onLine) return null;
   const db = getFirebaseDb();
-  if (!db) return false;
-
+  if (!db) return null;
   try {
-    const deviceId = await getDeviceId();
-    const docRef = doc(db, 'pixel_users', deviceId);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return false;
-    const data = snap.data();
-    await Promise.all([
-      saveTasks(data.tasks ?? []),
-      saveSessions(data.sessions ?? []),
-      saveFlashcards(data.flashcards ?? []),
-      saveMockTests(data.mockTests ?? []),
-      saveSettings({ ...DEFAULT_SETTINGS, ...(data.settings ?? {}) }),
-    ]);
-    return true;
+    const key = await getDocKey(uid);
+    const snap = await getDoc(doc(db, 'pixel_users', key));
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    return {
+      tasks:      d.tasks      ?? [],
+      sessions:   d.sessions   ?? [],
+      flashcards: d.flashcards ?? [],
+      mockTests:  d.mockTests  ?? [],
+      settings:   { ...DEFAULT_SETTINGS, ...(d.settings ?? {}) },
+      syncedAt:   d.syncedAt?.toDate?.()?.toISOString() ?? undefined,
+    };
   } catch (e) {
-    console.warn('[cloudSync] pull failed', e);
-    return false;
+    console.warn('[cloudSync] fetch failed', e);
+    return null;
   }
 }
 
-export function scheduleSync(delayMs = 30_000) {
-  if (!isFirebaseConfigured) return;
-  if (pendingSync) clearTimeout(pendingSync);
-  pendingSync = setTimeout(() => { syncToCloud(); }, delayMs);
+export async function restoreFromSnapshot(snapshot: CloudSnapshot): Promise<void> {
+  await Promise.all([
+    saveTasks(snapshot.tasks),
+    saveSessions(snapshot.sessions),
+    saveFlashcards(snapshot.flashcards),
+    saveMockTests(snapshot.mockTests),
+    saveSettings(snapshot.settings),
+  ]);
+  await localforage.setItem('pixel_last_sync', new Date().toISOString());
 }
 
-export async function getLastSyncTime(): Promise<string | null> {
-  return localforage.getItem<string>('pixel_last_sync');
+// ── Scheduled sync ────────────────────────────────────────────────────────────
+
+let currentUid: string | null = null;
+
+export function setCurrentUser(uid: string | null) {
+  currentUid = uid;
+  if (!uid) { setStatus('signed-out'); }
+}
+
+export function scheduleSync(delayMs = 30_000) {
+  if (!isFirebaseConfigured || !currentUid) return;
+  if (pendingSync) clearTimeout(pendingSync);
+  pendingSync = setTimeout(() => { syncToCloud(currentUid); }, delayMs);
 }
 
 export function setupPeriodicSync(intervalMs = 5 * 60 * 1000) {
   if (!isFirebaseConfigured) return;
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(() => {
-    if (navigator.onLine) syncToCloud();
+    if (navigator.onLine && currentUid) syncToCloud(currentUid);
   }, intervalMs);
-
-  window.addEventListener('online', () => { syncToCloud(); });
+  window.addEventListener('online', () => {
+    if (currentUid) syncToCloud(currentUid);
+  });
 }
 
 export function teardownSync() {
   if (syncTimer) clearInterval(syncTimer);
   if (pendingSync) clearTimeout(pendingSync);
+}
+
+export async function getLastSyncTime(): Promise<string | null> {
+  return localforage.getItem<string>('pixel_last_sync');
 }

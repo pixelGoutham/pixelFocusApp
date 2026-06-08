@@ -3,13 +3,16 @@ import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
   Timer, Clock, BarChart3, BookOpen, ClipboardList, Layers, Settings, Zap,
-  Music2, TreePine, X, ExternalLink
+  Music2, TreePine, X, ExternalLink, Cloud, LogIn,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useMusicContext } from '@/lib/MusicContext';
 import { PLAYER_HEIGHT } from '@/pages/Music';
+import { useAuth } from '@/lib/AuthContext';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { getSyncStatus } from '@/lib/cloudSync';
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -26,6 +29,54 @@ const NAV_ITEMS = [
   { href: '/music',         label: 'Music',        icon: Music2 },
   { href: '/consistency',   label: 'My Tree',      icon: TreePine },
 ];
+
+// ─── Auth Indicator ────────────────────────────────────────────────────────────
+function AuthIndicator({ isCollapsed }: { isCollapsed: boolean }) {
+  const { user } = useAuth();
+  const syncStatus = getSyncStatus();
+
+  if (!isFirebaseConfigured) return null;
+
+  const syncDot = user && syncStatus === 'success'
+    ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+    : user && syncStatus === 'syncing'
+    ? <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+    : null;
+
+  return (
+    <Link href="/settings">
+      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-white/5 transition-colors overflow-hidden group">
+        {user ? (
+          user.photoURL ? (
+            <img src={user.photoURL} alt="" className="h-5 w-5 rounded-full flex-shrink-0 object-cover" />
+          ) : (
+            <div className="h-5 w-5 rounded-full bg-primary/30 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
+              {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
+            </div>
+          )
+        ) : (
+          <LogIn className="h-5 w-5 text-zinc-600 group-hover:text-white flex-shrink-0" />
+        )}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap"
+            >
+              <span className="text-xs font-medium text-zinc-500 group-hover:text-white transition-colors truncate max-w-[120px]">
+                {user ? (user.displayName ?? user.email ?? 'Account') : 'Sign in'}
+              </span>
+              {syncDot}
+              {!user && <Cloud className="h-3 w-3 text-zinc-600" />}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Link>
+  );
+}
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
 const HEADER_H       = 56;    // h-14
@@ -125,6 +176,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Settings + collapse */}
         <div className="p-2 border-t space-y-0.5" style={{ borderColor: '#1a1a1a' }}>
+
+          {/* Auth indicator */}
+          <AuthIndicator isCollapsed={isCollapsed} />
+
           <Link href="/settings">
             <div className={cn(
               'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden',
