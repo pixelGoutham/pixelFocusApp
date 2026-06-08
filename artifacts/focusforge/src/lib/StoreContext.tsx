@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import {
   Task, StudySession, Flashcard, MockTest, AppSettings,
   getTasks, saveTasks, getSessions, saveSessions,
@@ -30,7 +30,7 @@ interface StoreContextType {
   settings: AppSettings;
   setSettings: (settings: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
   isLoading: boolean;
-  reloadAll: () => Promise<void>;
+  reloadAll: (broadcastChange?: boolean) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -40,6 +40,10 @@ export const useStore = () => {
   if (!context) throw new Error('useStore must be used within a StoreProvider');
   return context;
 };
+
+// ── BroadcastChannel key ─────────────────────────────────────────────────────
+type StoreTable = 'tasks' | 'sessions' | 'flashcards' | 'mockTests' | 'settings' | 'all';
+const CHANNEL_NAME = 'pixel-store-sync';
 
 export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -55,6 +59,31 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   const [cloudConflict, setCloudConflict] = useState<CloudSnapshot | null>(null);
   const prevUidRef = useRef<string | null | undefined>(undefined);
 
+  // ── BroadcastChannel: sync across tabs ───────────────────────────────────
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
+  // Reload a specific table from IndexedDB and update state (no re-broadcast)
+  const reloadTable = useCallback(async (table: StoreTable) => {
+    if (table === 'tasks'      || table === 'all') setTasksState(await getTasks());
+    if (table === 'sessions'   || table === 'all') setSessionsState(await getSessions());
+    if (table === 'flashcards' || table === 'all') setFlashcardsState(await getFlashcards());
+    if (table === 'mockTests'  || table === 'all') setMockTestsState(await getMockTests());
+    if (table === 'settings'   || table === 'all') setSettingsState(await getSettings());
+  }, []);
+
+  useEffect(() => {
+    const channel = new BroadcastChannel(CHANNEL_NAME);
+    channelRef.current = channel;
+    channel.onmessage = (e: MessageEvent<{ table: StoreTable }>) => {
+      reloadTable(e.data.table);
+    };
+    return () => { channel.close(); channelRef.current = null; };
+  }, [reloadTable]);
+
+  const broadcast = (table: StoreTable) => {
+    channelRef.current?.postMessage({ table });
+  };
+
   // ── Local data loader ────────────────────────────────────────────────────
 
   const loadLocal = async () => {
@@ -68,13 +97,9 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setSettingsState(set);
   };
 
-  const seedIfNeeded = async () => {
-    await loadLocal();
-  };
-
   const loadData = async () => {
     setIsLoading(true);
-    await seedIfNeeded();
+    await loadLocal();
     setIsLoading(false);
     setupPeriodicSync();
   };
@@ -142,6 +167,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setTasksState(prev => {
       const next = typeof newTasks === 'function' ? newTasks(prev) : newTasks;
       saveTasks(next);
+      broadcast('tasks');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
       return next;
     });
@@ -151,6 +177,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setSessionsState(prev => {
       const next = typeof newSessions === 'function' ? newSessions(prev) : newSessions;
       saveSessions(next);
+      broadcast('sessions');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
       return next;
     });
@@ -160,6 +187,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setFlashcardsState(prev => {
       const next = typeof newFlashcards === 'function' ? newFlashcards(prev) : newFlashcards;
       saveFlashcards(next);
+      broadcast('flashcards');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
       return next;
     });
@@ -169,6 +197,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setMockTestsState(prev => {
       const next = typeof newMockTests === 'function' ? newMockTests(prev) : newMockTests;
       saveMockTests(next);
+      broadcast('mockTests');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
       return next;
     });
@@ -178,15 +207,17 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setSettingsState(prev => {
       const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
       saveSettings(next);
+      broadcast('settings');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
       return next;
     });
   };
 
-  const reloadAll = async () => {
+  const reloadAll = async (broadcastChange = false) => {
     setIsLoading(true);
     await loadLocal();
     setIsLoading(false);
+    if (broadcastChange) broadcast('all');
   };
 
   // ── Conflict resolution dialog ────────────────────────────────────────────
