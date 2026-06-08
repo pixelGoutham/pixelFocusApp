@@ -61,6 +61,7 @@ export interface AppSettings {
   onboardingDone: boolean;
   subjects: Subject[];
   studyPlan: Record<string, Record<string, number>>; // subjectName -> "yyyy-MM-dd" -> hours
+  theme: 'dark' | 'light' | 'system';
 }
 
 // Storage keys
@@ -108,6 +109,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   onboardingDone: false,
   subjects: [],
   studyPlan: {},
+  theme: 'dark',
 };
 export const getSettings = async (): Promise<AppSettings> => {
   const saved = await localforage.getItem<AppSettings>(KEYS.settings);

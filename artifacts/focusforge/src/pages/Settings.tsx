@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, Upload, Trash2, Save, AlertTriangle, Cloud, CloudOff, RefreshCw, CheckCircle2, LogOut } from "lucide-react";
+import { Download, Upload, Trash2, Save, AlertTriangle, Cloud, CloudOff, RefreshCw, CheckCircle2, LogOut, Sun, Moon, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useStore } from "@/lib/StoreContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { exportData, importData, DEFAULT_SETTINGS } from "@/lib/store";
+import { useTheme, Theme } from "@/lib/ThemeContext";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { syncToCloud, onSyncStatusChange, SyncStatus, getLastSyncTime } from "@/lib/cloudSync";
 import { format } from "date-fns";
@@ -39,6 +40,7 @@ export default function Settings() {
   const { settings, setSettings, reloadAll } = useStore();
   const { user, isAuthLoading, isFirebaseReady, signInWithGoogle, signInWithApple, signOut, authError, clearAuthError } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [name, setName] = useState(settings.userName || user?.displayName || "");
   const [goal, setGoal] = useState(settings.dailyGoalMinutes);
   const [pomWork, setPomWork] = useState(settings.pomodoroWork);
@@ -304,6 +306,33 @@ export default function Settings() {
           <Button className="gap-2" onClick={saveProfile} data-testid="button-save-profile">
             <Save className="h-4 w-4" />Save Profile
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Appearance ────────────────────────────────────────────────────────── */}
+      <Card className="bg-card border-border">
+        <CardHeader><CardTitle className="text-sm font-semibold">Appearance</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { value: 'light', label: 'Light', icon: Sun },
+              { value: 'dark',  label: 'Dark',  icon: Moon },
+              { value: 'system',label: 'System',icon: Monitor },
+            ] as { value: Theme; label: string; icon: React.FC<{ className?: string }> }[]).map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                  theme === value
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted/30 text-muted-foreground hover:border-border/80 hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{label}</span>
+              </button>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

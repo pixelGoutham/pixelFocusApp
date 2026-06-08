@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
 import { MusicProvider } from "@/lib/MusicContext";
 import { TimerProvider } from "@/lib/TimerContext";
+import { ThemeProvider } from "@/lib/ThemeContext";
 import { Layout } from "@/components/Layout";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
@@ -72,6 +73,7 @@ function App() {
       <TooltipProvider>
         <AuthProvider>
           <StoreProvider>
+            <ThemeProvider>
             <TimerProvider>
               <MusicProvider>
                 {isElectron ? (
@@ -85,6 +87,7 @@ function App() {
                 )}
               </MusicProvider>
             </TimerProvider>
+            </ThemeProvider>
           </StoreProvider>
         </AuthProvider>
         <Toaster />

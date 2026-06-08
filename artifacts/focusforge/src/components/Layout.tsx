@@ -3,7 +3,7 @@ import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
   Timer, Clock, BarChart3, BookOpen, ClipboardList, Settings, Zap,
-  Music2, TreePine, X, ExternalLink, Cloud, LogIn,
+  Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import { PLAYER_HEIGHT } from '@/pages/Music';
 import { useAuth } from '@/lib/AuthContext';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { getSyncStatus } from '@/lib/cloudSync';
+import { useTheme } from '@/lib/ThemeContext';
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -44,7 +45,7 @@ function AuthIndicator({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <Link href="/settings">
-      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-white/5 transition-colors overflow-hidden group">
+      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/60 transition-colors overflow-hidden group">
         {user ? (
           user.photoURL ? (
             <img src={user.photoURL} alt="" className="h-5 w-5 rounded-full flex-shrink-0 object-cover" />
@@ -54,7 +55,7 @@ function AuthIndicator({ isCollapsed }: { isCollapsed: boolean }) {
             </div>
           )
         ) : (
-          <LogIn className="h-5 w-5 text-zinc-600 group-hover:text-white flex-shrink-0" />
+          <LogIn className="h-5 w-5 text-muted-foreground group-hover:text-foreground flex-shrink-0" />
         )}
         <AnimatePresence>
           {!isCollapsed && (
@@ -64,11 +65,11 @@ function AuthIndicator({ isCollapsed }: { isCollapsed: boolean }) {
               exit={{ opacity: 0, width: 0 }}
               className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap"
             >
-              <span className="text-xs font-medium text-zinc-500 group-hover:text-white transition-colors truncate max-w-[120px]">
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[120px]">
                 {user ? (user.displayName ?? user.email ?? 'Account') : 'Sign in'}
               </span>
               {syncDot}
-              {!user && <Cloud className="h-3 w-3 text-zinc-600" />}
+              {!user && <Cloud className="h-3 w-3 text-muted-foreground" />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -91,6 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [miniDismissed, setMiniDismissed] = useState(false);
   const [miniCollapsed, setMiniCollapsed] = useState(false);
   const { embedUrl, title, thumb, clearYt } = useMusicContext();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const isOnMusic = location === '/music' || location.startsWith('/music');
   const sidebarW  = isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
@@ -102,19 +104,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Re-show mini-player when URL changes
   React.useEffect(() => { setMiniDismissed(false); setMiniCollapsed(false); }, [embedUrl]);
 
+  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ background: '#000' }}>
+    <div className="flex h-screen w-full overflow-hidden bg-background">
 
       {/* ── Sidebar ── */}
       <motion.aside
         initial={false}
         animate={{ width: sidebarW }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col z-20 flex-shrink-0 border-r"
-        style={{ background: '#0a0a0a', borderColor: '#1a1a1a' }}
+        className="flex flex-col z-20 flex-shrink-0 border-r border-sidebar-border bg-sidebar"
       >
         {/* Logo */}
-        <div className="flex h-14 items-center justify-between px-4 border-b" style={{ borderColor: '#1a1a1a' }}>
+        <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
             <Zap className="h-6 w-6 text-primary flex-shrink-0" />
             <AnimatePresence>
@@ -123,7 +126,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 'auto' }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="font-bold text-lg tracking-tight text-white"
+                  className="font-bold text-lg tracking-tight text-foreground"
                 >
                   Pixel
                 </motion.span>
@@ -143,7 +146,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden',
                   isActive
                     ? 'bg-primary/10 text-primary'
-                    : 'text-zinc-500 hover:bg-white/5 hover:text-white'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                 )}>
                   <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-primary')} />
                   {/* Music pulse dot when playing */}
@@ -173,8 +176,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </div>
 
-        {/* Settings + collapse */}
-        <div className="p-2 border-t space-y-0.5" style={{ borderColor: '#1a1a1a' }}>
+        {/* Settings + theme toggle + collapse */}
+        <div className="p-2 border-t border-sidebar-border space-y-0.5">
 
           {/* Auth indicator */}
           <AuthIndicator isCollapsed={isCollapsed} />
@@ -184,7 +187,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden',
               location.startsWith('/settings')
                 ? 'bg-primary/10 text-primary'
-                : 'text-zinc-500 hover:bg-white/5 hover:text-white'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
             )}>
               <Settings className="h-5 w-5 flex-shrink-0" />
               <AnimatePresence>
@@ -202,9 +205,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors overflow-hidden group"
+          >
+            <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
+              {resolvedTheme === 'dark'
+                ? <Sun className="h-4 w-4" />
+                : <Moon className="h-4 w-4" />
+              }
+            </div>
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="font-medium text-sm whitespace-nowrap"
+                >
+                  {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </div>
+            )}
+          </button>
+
           <button
             onClick={() => setIsCollapsed(c => !c)}
-            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-zinc-600 hover:bg-white/5 hover:text-white transition-colors justify-center md:justify-start overflow-hidden"
+            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors justify-center md:justify-start overflow-hidden"
           >
             <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -232,24 +266,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-14 border-b flex items-center justify-between px-6 z-10 sticky top-0"
-          style={{ background: '#000', borderColor: '#1a1a1a' }}>
-          <h1 className="font-semibold text-lg tracking-tight text-white">
+        <header className="h-14 border-b border-border flex items-center justify-between px-6 z-10 sticky top-0 bg-background">
+          <h1 className="font-semibold text-lg tracking-tight text-foreground">
             {activeItem?.label || 'Pixel'}
           </h1>
-          <div className="text-sm font-medium text-zinc-600 tabular-nums">
+          <div className="text-sm font-medium text-muted-foreground tabular-nums">
             {format(new Date(), 'EEEE, d MMMM yyyy • HH:mm')}
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto relative flex flex-col" style={{ background: '#000' }}>
+        <main className="flex-1 overflow-auto relative flex flex-col bg-background">
           <div className={cn('flex-1', !isOnMusic && 'p-6')}>
             {children}
           </div>
-          <footer className="flex-shrink-0 border-t py-2 px-6 flex items-center justify-center"
-            style={{ borderColor: '#1a1a1a' }}>
-            <p className="text-xs text-zinc-700">
+          <footer className="flex-shrink-0 border-t border-border py-2 px-6 flex items-center justify-center">
+            <p className="text-xs text-muted-foreground/50">
               made with ❤️ by <span className="text-primary font-medium">Pixel for bot</span>
             </p>
           </footer>
