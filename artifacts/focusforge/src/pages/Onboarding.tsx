@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStore } from "@/lib/StoreContext";
+import { useAuth } from "@/lib/AuthContext";
 import { Subject } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -25,12 +26,13 @@ const variants = {
 
 export default function Onboarding() {
   const { settings, setSettings } = useStore();
+  const { user } = useAuth();
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState(1);
 
-  // Step 1
-  const [name, setName] = useState("");
+  // Step 1 — pre-fill from auth if available
+  const [name, setName] = useState(() => user?.displayName ?? "");
   const [goal, setGoal] = useState(480);
 
   // Step 2
@@ -129,12 +131,27 @@ export default function Onboarding() {
                 className="p-8 md:p-10"
               >
                 <div className="flex flex-col items-center gap-2 mb-8">
-                  <div className="flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-2">
-                    <Zap className="h-8 w-8 text-primary" />
-                  </div>
-                  <h1 className="text-2xl font-bold tracking-tight">Welcome to Pixel</h1>
+                  {user?.photoURL ? (
+                    <div className="relative mb-2">
+                      <img
+                        src={user.photoURL}
+                        alt={user.displayName ?? ""}
+                        className="h-16 w-16 rounded-full object-cover border-2 border-primary/30 shadow-lg"
+                      />
+                      <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <Zap className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-2">
+                      <Zap className="h-8 w-8 text-primary" />
+                    </div>
+                  )}
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    {user?.displayName ? `Hey, ${user.displayName.split(" ")[0]}!` : "Welcome to Pixel"}
+                  </h1>
                   <p className="text-sm text-muted-foreground text-center">
-                    Your offline productivity OS. Study. Plan. Focus. Achieve.
+                    {user?.displayName ? "Let's set up your study space." : "Your offline productivity OS. Study. Plan. Focus. Achieve."}
                   </p>
                 </div>
 

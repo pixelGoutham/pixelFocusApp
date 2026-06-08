@@ -39,7 +39,7 @@ export default function Settings() {
   const { settings, setSettings, reloadAll } = useStore();
   const { user, isAuthLoading, isFirebaseReady, signInWithGoogle, signInWithApple, signOut, authError, clearAuthError } = useAuth();
   const { toast } = useToast();
-  const [name, setName] = useState(settings.userName);
+  const [name, setName] = useState(settings.userName || user?.displayName || "");
   const [goal, setGoal] = useState(settings.dailyGoalMinutes);
   const [pomWork, setPomWork] = useState(settings.pomodoroWork);
   const [pomBreak, setPomBreak] = useState(settings.pomodoroBreak);
@@ -56,6 +56,14 @@ export default function Settings() {
     getLastSyncTime().then(setLastSync);
     return unsub;
   }, []);
+
+  // When user signs in, pull their display name into the profile field if it's empty
+  useEffect(() => {
+    if (user?.displayName && !name.trim()) {
+      setName(user.displayName);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.displayName]);
 
   // Show auth errors as toasts
   useEffect(() => {
@@ -266,8 +274,24 @@ export default function Settings() {
       <Card className="bg-card border-border">
         <CardHeader><CardTitle className="text-sm font-semibold">Profile</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          {/* Auth avatar / initials — shown when signed in */}
+          {user && (
+            <div className="flex items-center gap-3 pb-1">
+              {user.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName ?? ""} className="h-12 w-12 rounded-full object-cover border border-border flex-shrink-0" />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-base flex-shrink-0">
+                  {(user.displayName ?? user.email ?? "?")[0].toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{user.displayName ?? "Signed in"}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
+          )}
           <div>
-            <Label>Your Name</Label>
+            <Label>Display Name</Label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Arjun" data-testid="input-settings-name" />
           </div>
           <div>
