@@ -20,5 +20,9 @@ description: How to build Windows/Linux desktop binaries for the Pixel app from 
 - Capacitor (`@capacitor/core`, `@capacitor/cli`, `@capacitor/android`) scaffolds a full Gradle-based Android project fine via plain `npm install` + `npx cap init` + `npx cap add android` — this part needs no SDK.
 - Actually compiling the APK (`./gradlew assembleDebug`) needs Java + the Android SDK/build-tools, which are not present and are impractical to install here (multi-GB download, interactive license acceptance). Ship the scaffolded project and instruct the user to open it in Android Studio (auto-installs SDK) or run Gradle themselves with SDK already set up.
 
+## Local-only node_modules for non-workspace folders
+- `focusforge-desktop` (Electron project) is not a pnpm workspace member, but electron-builder's own deps had been installed via pnpm at some point, symlinking into the root `.pnpm` store. Any accidental pnpm operation from another ad-hoc folder that prunes the root store silently breaks it (`Cannot find module .../electron-builder/cli.js`).
+- **How to apply:** for any ad-hoc, non-workspace project folder (Electron app, Capacitor app, etc.), run `npm install` inside it to get a fully self-contained `node_modules`, independent of the root pnpm store. Never let it rely on pnpm hoisting.
+
 ## Workspace hygiene
 - Do not run `pnpm install` from inside an ad-hoc folder that isn't declared in `pnpm-workspace.yaml` packages — pnpm will still treat the repo root as the workspace root and can mutate the root `pnpm-lock.yaml` (e.g. pruning unrelated importer entries). Use plain `npm install` inside a standalone folder that lives outside the pnpm workspace glob instead.

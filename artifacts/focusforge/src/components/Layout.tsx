@@ -3,7 +3,7 @@ import { useLocation, Link } from 'wouter';
 import { 
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
   Timer, Clock, BarChart3, BookOpen, ClipboardList, Settings, Zap,
-  Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon,
+  Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon, Menu,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -86,16 +86,23 @@ const SIDEBAR_EXPANDED  = 240;
 const SIDEBAR_COLLAPSED = 64;
 
 // ─── Component ────────────────────────────────────────────────────────────────
+const MOBILE_BREAKPOINT = 768;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
+  );
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [miniDismissed, setMiniDismissed] = useState(false);
   const [miniCollapsed, setMiniCollapsed] = useState(false);
   const { embedUrl, title, thumb, clearYt } = useMusicContext();
   const { resolvedTheme, setTheme } = useTheme();
 
   const isOnMusic = location === '/music' || location.startsWith('/music');
-  const sidebarW  = isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+  const sidebarCollapsed = isMobile ? false : isCollapsed;
+  const sidebarW  = isMobile ? 0 : (isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED);
 
   const activeItem = [...NAV_ITEMS, { href: '/settings', label: 'Settings', icon: Settings }].find(item =>
     item.href === '/' ? location === '/' : location.startsWith(item.href)
@@ -104,24 +111,55 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Re-show mini-player when URL changes
   React.useEffect(() => { setMiniDismissed(false); setMiniCollapsed(false); }, [embedUrl]);
 
+  // Track viewport width to switch between desktop collapse and mobile drawer modes
+  React.useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Close the mobile drawer whenever the route changes
+  React.useEffect(() => { setIsMobileOpen(false); }, [location]);
+
   const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
 
+      {/* ── Mobile drawer backdrop ── */}
+      <AnimatePresence>
+        {isMobile && isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setIsMobileOpen(false)}
+            className="fixed inset-0 z-30 bg-black/50"
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── Sidebar ── */}
       <motion.aside
         initial={false}
-        animate={{ width: sidebarW }}
+        animate={
+          isMobile
+            ? { x: isMobileOpen ? 0 : -SIDEBAR_EXPANDED, width: SIDEBAR_EXPANDED }
+            : { x: 0, width: sidebarW }
+        }
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col z-20 flex-shrink-0 border-r border-sidebar-border bg-sidebar"
+        className={cn(
+          'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar',
+          isMobile && 'fixed inset-y-0 left-0'
+        )}
       >
         {/* Logo */}
         <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
             <Zap className="h-6 w-6 text-primary flex-shrink-0" />
             <AnimatePresence>
-              {!isCollapsed && (
+              {!sidebarCollapsed && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 'auto' }}
@@ -133,6 +171,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             </AnimatePresence>
           </div>
+          {isMobile && (
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="p-1 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors flex-shrink-0"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Nav links */}
@@ -154,7 +201,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <span className="absolute left-2.5 top-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                   )}
                   <AnimatePresence>
-                    {!isCollapsed && (
+                    {!sidebarCollapsed && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: 'auto' }}
@@ -165,7 +212,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </motion.span>
                     )}
                   </AnimatePresence>
-                  {isCollapsed && (
+                  {sidebarCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
                       {item.label}
                     </div>
@@ -180,7 +227,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-2 border-t border-sidebar-border space-y-0.5">
 
           {/* Auth indicator */}
-          <AuthIndicator isCollapsed={isCollapsed} />
+          <AuthIndicator isCollapsed={sidebarCollapsed} />
 
           <Link href="/settings">
             <div className={cn(
@@ -191,7 +238,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}>
               <Settings className="h-5 w-5 flex-shrink-0" />
               <AnimatePresence>
-                {!isCollapsed && (
+                {!sidebarCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
@@ -218,7 +265,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               }
             </div>
             <AnimatePresence>
-              {!isCollapsed && (
+              {!sidebarCollapsed && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 'auto' }}
@@ -229,48 +276,61 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </motion.span>
               )}
             </AnimatePresence>
-            {isCollapsed && (
+            {sidebarCollapsed && (
               <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
                 {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </div>
             )}
           </button>
 
-          <button
-            onClick={() => setIsCollapsed(c => !c)}
-            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors justify-center md:justify-start overflow-hidden"
-          >
-            <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                className={cn('transition-transform duration-300', isCollapsed ? 'rotate-180' : 'rotate-0')}>
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-            </div>
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="font-medium text-sm whitespace-nowrap"
-                >
-                  Collapse
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+          {!isMobile && (
+            <button
+              onClick={() => setIsCollapsed(c => !c)}
+              className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors justify-center md:justify-start overflow-hidden"
+            >
+              <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className={cn('transition-transform duration-300', isCollapsed ? 'rotate-180' : 'rotate-0')}>
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+              </div>
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="font-medium text-sm whitespace-nowrap"
+                  >
+                    Collapse
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          )}
         </div>
       </motion.aside>
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-14 border-b border-border flex items-center justify-between px-6 z-10 sticky top-0 bg-background">
-          <h1 className="font-semibold text-lg tracking-tight text-foreground">
-            {activeItem?.label || 'Pixel'}
-          </h1>
-          <div className="text-sm font-medium text-muted-foreground tabular-nums">
+        <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 z-10 sticky top-0 bg-background gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {isMobile && (
+              <button
+                onClick={() => setIsMobileOpen(true)}
+                className="p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors flex-shrink-0"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            )}
+            <h1 className="font-semibold text-lg tracking-tight text-foreground truncate">
+              {activeItem?.label || 'Pixel'}
+            </h1>
+          </div>
+          <div className="text-sm font-medium text-muted-foreground tabular-nums flex-shrink-0 hidden sm:block">
             {format(new Date(), 'EEEE, d MMMM yyyy • HH:mm')}
           </div>
         </header>
