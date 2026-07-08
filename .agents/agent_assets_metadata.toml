@@ -6,3 +6,9 @@ id = "5fGQG1KDHrSTstvIMz2rO"
 uri = "file://pixel-desktop.tar.gz"
 type = "unspecified"
 title = "Pixel Desktop — ready to build"
+
+[[outputs]]
+id = "PF4KN1e9NOXmER9KJFZ1Y"
+uri = "file://pixel-multiplatform-build.zip"
+type = "unspecified"
+title = "Pixel — Windows, Fedora & Android Build Package"
