@@ -12,3 +12,15 @@ id = "PF4KN1e9NOXmER9KJFZ1Y"
 uri = "file://pixel-multiplatform-build.zip"
 type = "unspecified"
 title = "Pixel — Windows, Fedora & Android Build Package (collapsible sidebar)"
+
+[[outputs]]
+id = "tQEtIuVcveKW7ceZnN823"
+uri = "file://attached_assets/screenshots/3c3cef01-bb21-4aa1-bf09-21a95977a86f-00-1wlambfyuugfj_pike_replit_dev_mockup_preview_pixel-home_CommandCentre.png"
+type = "image"
+title = "Option 1 — Command Centre"
+
+[[outputs]]
+id = "DDIB6csw8tAff5qaxk-6D"
+uri = "file://attached_assets/screenshots/3c3cef01-bb21-4aa1-bf09-21a95977a86f-00-1wlambfyuugfj_pike_replit_dev_mockup_preview_pixel-home_FocusedFlow.png"
+type = "image"
+title = "Option 2 — Focused Flow"
