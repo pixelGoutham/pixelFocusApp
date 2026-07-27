@@ -1,0 +1,231 @@
+We are adding an entirely new screen to Pixel Focus.
+
+This screen does NOT exist today.
+
+It will become the default screen users see when they open the application.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is NOT a dashboard.
+
+This is NOT an analytics page.
+
+This is the HOME.
+
+Think of it as the operating system's desktop.
+
+Everything important starts here.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The goal is simple.
+
+When a student opens Pixel Focus they should instantly know:
+
+• What should I do next?
+• How much have I done today?
+• What deserves my attention?
+• Can I immediately begin studying?
+
+Without opening another page.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pixel Focus contains many modules.
+
+Tasks.
+
+Calendar.
+
+Pomodoro.
+
+Analytics.
+
+Study Planner.
+
+Mock Tests.
+
+Music.
+
+Settings.
+
+I DO NOT want users constantly jumping between them.
+
+Instead, Home should intelligently surface the most useful information from every module.
+
+The detailed pages still exist.
+
+Home is simply the command centre.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Imagine this sentence guiding every design decision:
+
+"If an operating system was designed exclusively for ambitious students."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The experience should feel calm.
+
+Confident.
+
+Focused.
+
+Opening Pixel Focus should reduce anxiety.
+
+It should never overwhelm the user.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Suggested layout
+
+TOP
+
+Greeting
+
+Good Morning.
+
+Current streak.
+
+Today's date.
+
+Upcoming exam countdown.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MAIN HERO
+
+Today's Mission
+
+This is the largest component.
+
+It should tell the student exactly what deserves attention today.
+
+Examples:
+
+Physics Revision
+
+Chemistry DPP
+
+Math Mock
+
+Resume Focus Session
+
+One beautiful CTA
+
+▶ Continue Studying
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RIGHT SIDE
+
+Large beautiful Focus Timer.
+
+If a session was interrupted yesterday,
+
+show
+
+Resume 45 minute Physics Session
+
+instead of Start.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BELOW
+
+Today's Timeline
+
+Visual schedule.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Then
+
+Today's Tasks
+
+Interactive checklist.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Then
+
+Progress Snapshot
+
+Study hours today
+
+Weekly streak
+
+Completion
+
+Small beautiful graphs.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Then
+
+Study Heatmap
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Then
+
+Quick Actions
+
+New Task
+
+Start Timer
+
+Open Calendar
+
+New Mock Test
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The important thing is this.
+
+This should NOT feel like many cards stacked together.
+
+Everything should feel connected.
+
+Almost like one workspace.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESIGN LANGUAGE
+
+Dark theme.
+
+Minimal.
+
+Premium.
+
+Soft corners.
+
+Large spacing.
+
+Beautiful typography.
+
+No unnecessary colours.
+
+Yellow should only highlight important actions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Think less like designing another productivity app.
+
+Think more like designing the desktop of a student operating system.
+
+The user should naturally spend 90% of their time on this page.
+
+Only visiting other pages when they need additional detail.
+
+Create something that feels original.
+
+Not another analytics dashboard.
+
+Not another Notion clone.
+
+Make me genuinely want to begin studying the moment I open Pixel Focus.
+don't make Home a summary of the app.
+Make a plan and suggest me designs and screenshot variants
+Dont code anything yet
