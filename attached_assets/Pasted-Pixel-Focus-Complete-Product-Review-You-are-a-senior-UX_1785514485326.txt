@@ -1,0 +1,214 @@
+Pixel Focus Complete Product Review
+
+You are a senior UX designer, product strategist, conversion rate optimization (CRO) expert, frontend engineer, and student productivity researcher.
+
+Review my product as if you were hired to prepare it for launch.
+
+Website
+
+Landing Page: https://pixel-focus-meow.vercel.app
+
+Your job is to thoroughly review BOTH the landing page and the application available through the website.
+
+Browse the website exactly like a first-time visitor. Click every button, inspect every page, test every interaction, and if there is a downloadable application, download it and evaluate it as well.
+
+---
+
+Part 1 – Landing Page
+
+Evaluate:
+
+- First impression (within the first 5 seconds)
+- Clarity of the product
+- Value proposition
+- Messaging
+- Copywriting
+- Visual hierarchy
+- Typography
+- Color palette
+- Animations
+- Responsiveness
+- Accessibility
+- Loading performance
+- Mobile experience
+- Desktop experience
+- CTA placement
+- Trust factors
+- SEO basics
+- Overall polish
+
+Answer questions like:
+
+- What immediately stands out?
+- What is confusing?
+- What would make users leave?
+- What builds confidence?
+- What lowers perceived quality?
+- Would a student actually download this?
+
+Whenever you find a problem:
+
+- Explain why it is a problem.
+- Explain its impact.
+- Suggest an improved version.
+
+Rewrite weak copy where appropriate.
+
+---
+
+Part 2 – App Review
+
+Download the application from the website.
+
+Install or run it if possible.
+
+Explore every major feature.
+
+Review:
+
+- Installation experience
+- Onboarding
+- Navigation
+- UI consistency
+- Visual design
+- Performance
+- Animations
+- Ease of use
+- Learning curve
+- Error handling
+- Settings
+- Overall user experience
+
+Pretend you are a Class 11/12 student preparing for JEE or NEET and use the app from that perspective.
+
+Ask yourself:
+
+- Would I continue using this after one week?
+- Does it genuinely reduce friction?
+- Is it simpler than Notion or Todoist?
+- Does anything feel unnecessary?
+- Does anything feel missing?
+
+---
+
+Part 3 – Product Strategy
+
+Compare Pixel Focus with:
+
+- Notion
+- Todoist
+- TickTick
+- Google Tasks
+- Microsoft To Do
+
+Identify:
+
+- Competitive advantages
+- Weaknesses
+- Opportunities
+- Features that should never be added (to avoid feature bloat)
+- Features worth adding
+
+---
+
+Part 4 – Growth & Conversion
+
+Evaluate whether students would:
+
+- Download it
+- Recommend it
+- Keep using it after 30 days
+- Pay for premium features (if introduced)
+
+Review:
+
+- Landing page conversion
+- Download flow
+- Activation
+- Retention potential
+
+Suggest improvements backed by UX and product reasoning.
+
+---
+
+Part 5 – Technical Review
+
+Inspect the website using browser developer tools.
+
+Evaluate:
+
+- Console errors
+- Performance bottlenecks
+- Accessibility issues
+- Layout shifts
+- Broken links
+- Responsiveness
+- Network requests
+- Images
+- Fonts
+- Metadata
+- SEO implementation
+
+Mention anything that would negatively impact production quality.
+
+---
+
+Final Report
+
+Provide:
+
+Overall Ratings (/10)
+
+- Design
+- UX
+- UI
+- Copywriting
+- Performance
+- Accessibility
+- Student Value
+- Trust
+- Originality
+- Conversion
+- Overall Product
+
+---
+
+Top Strengths
+
+List the five strongest aspects.
+
+---
+
+Biggest Weaknesses
+
+List the ten most important problems.
+
+---
+
+Prioritized Roadmap
+
+Critical (fix immediately)
+
+High Priority
+
+Medium Priority
+
+Nice to Have
+
+Rank everything by expected impact.
+
+---
+
+Do not be polite.
+
+Do not assume my decisions are correct.
+
+Challenge design choices when appropriate.
+
+If something hurts usability, explain exactly why.
+
+If something is excellent, explain why.
+
+Support your recommendations with UX principles, product strategy, psychology, or conversion reasoning rather than personal preference.
+
+The goal is to make Pixel Focus feel like the productivity app that students actually enjoy using—not just another task manager.
