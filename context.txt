@@ -109,3 +109,38 @@ Utility scripts for development tasks, currently containing a simple "hello" Typ
 This project is a feature-rich productivity suite with a clean, modern UI. It is ready for further development or deployment. The monorepo structure allows for independent development of the web app, API, and shared libraries. The desktop wrapper provides a seamless offline experience.
 
 For any questions regarding the architecture or specific modules, refer to the source code and inline documentation.
+
+## Logs
+# PixelFocusApp Development Log
+
+## Logs
+**Date: 2026-09-13**
+
+### Work Completed Today:
+- Executed Apple Visual Magic injection across artifacts/focusforge directory
+- Completed Phase 1-4 implementation of frontend upgrade using apple-design skill:
+  - Phase 1: Physics & Typography Foundation (fluid typography with CSS clamp(), optical sizing)
+  - Phase 2: Kill Latency (App Shell)
+  - Phase 3: Interruptible Springs (Primitives)
+  - Phase 4: Momentum & Spatial Consistency (Complex Views)
+- Specific modifications made:
+  - Updated index.css with fluid typography variables, optical sizing, and accessibility media queries
+  - Added active-scale utility class for instant pointer-down feedback
+  - Modified Layout.tsx for translucent sidebar materials and active-scale on interactive elements
+  - Enhanced button.tsx with Framer Motion spring animations (critically damped: bounce: 0, duration: 0.4)
+  - Implemented swipe-to-delete in Tasks.tsx using useDraggable hook with velocity-based deletion
+  - Fixed dialog.tsx and alert-dialog.tsx positioning to properly anchor to trigger elements
+  - Created use-draggable.ts hook with PointerEvent handling, velocity tracking, and rubberband boundaries
+- Verified no business logic, routing, or data storage changes were made
+- Confirmed zero new dependencies were introduced
+- Validated build success with only expected warnings
+
+### Technical Details:
+- Fluid typography: --font-size: clamp(0.875rem, 0.5rem + 0.75vw, 1rem)
+- Optical sizing: font-optical-sizing: auto applied to html element
+- Size-specific tracking: --tracking: 0em, --tracking-heading: -0.02em
+- Inverse leading: --leading: 1.5, --leading-heading: 1.1
+- Accessibility: prefers-reduced-motion, prefers-reduced-transparency, prefers-contrast media queries
+- Drag physics: Velocity tracking (pixels/second), rubberband() progressive resistance
+- Button animations: Critically damped Framer Motion springs (bounce: 0, duration: 0.4)
+- Overlay positioning: Removed fixed positioning overrides, let Radix UI handle natural anchor-based positioning
