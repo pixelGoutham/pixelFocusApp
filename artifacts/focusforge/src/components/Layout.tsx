@@ -45,7 +45,7 @@ function AuthIndicator({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <Link href="/settings">
-      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/60 transition-colors overflow-hidden group">
+      <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/60 transition-colors overflow-hidden group active-scale">
         {user ? (
           user.photoURL ? (
             <img src={user.photoURL} alt="" className="h-5 w-5 rounded-full flex-shrink-0 object-cover" />
@@ -150,7 +150,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className={cn(
-          'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar',
+          'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar/90 backdrop-blur-lg',
           isMobile && 'fixed inset-y-0 left-0'
         )}
       >
@@ -190,7 +190,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             return (
               <Link key={item.href} href={item.href}>
                 <div className={cn(
-                  'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden',
+                  'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden active-scale',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
@@ -231,7 +231,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <Link href="/settings">
             <div className={cn(
-              'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden',
+              'flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors group relative overflow-hidden active-scale',
               location.startsWith('/settings')
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
@@ -256,7 +256,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <button
             onClick={toggleTheme}
             title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors overflow-hidden group"
+            className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors overflow-hidden group active-scale"
           >
             <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
               {resolvedTheme === 'dark'
@@ -286,7 +286,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {!isMobile && (
             <button
               onClick={() => setIsCollapsed(c => !c)}
-              className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors justify-center md:justify-start overflow-hidden"
+              className="flex w-full items-center gap-3 px-2.5 py-2 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors justify-center md:justify-start overflow-hidden active-scale"
             >
               <div className="h-5 w-5 flex items-center justify-center flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -320,7 +320,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {isMobile && (
               <button
                 onClick={() => setIsMobileOpen(true)}
-                className="p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors flex-shrink-0"
+                className="p-1.5 -ml-1.5 rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors flex-shrink-0 active-scale"
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
@@ -396,6 +396,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
                 onClick={() => setMiniCollapsed(false)}
+                className="active-scale"
                 style={{
                   position: 'fixed',
                   bottom: 24, right: 24,
@@ -448,7 +449,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <button
                       onClick={() => setMiniCollapsed(true)}
                       title="Collapse"
-                      className="h-5 w-5 flex items-center justify-center text-zinc-600 hover:text-white transition-colors rounded"
+                      className="h-5 w-5 flex items-center justify-center text-zinc-600 hover:text-white transition-colors rounded active-scale"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                         <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -458,7 +459,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <button
                       onClick={() => setMiniDismissed(true)}
                       title="Hide"
-                      className="h-5 w-5 flex items-center justify-center text-zinc-600 hover:text-white transition-colors rounded"
+                      className="h-5 w-5 flex items-center justify-center text-zinc-600 hover:text-white transition-colors rounded active-scale"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -489,13 +490,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="border-t px-3 py-2 flex items-center justify-between" style={{ borderColor: '#1a1a1a' }}>
                   <button
                     onClick={() => { clearYt(); setMiniDismissed(false); }}
-                    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors active-scale"
                   >
                     Stop
                   </button>
                   <button
                     onClick={() => navigate('/music')}
-                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-amber-300 transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-amber-300 transition-colors active-scale"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Open Player

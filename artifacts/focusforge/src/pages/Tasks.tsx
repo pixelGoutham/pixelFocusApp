@@ -13,6 +13,7 @@ import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getSubjectColor } from "./Dashboard";
+import { useDraggable } from "@/hooks/use-draggable";
 import type { Task } from "@/lib/store";
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
@@ -131,31 +132,65 @@ export default function Tasks() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filtered.map(task => (
-                <div key={task.id} data-testid={`task-row-${task.id}`} className={cn("flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors", task.completed && "opacity-50")}>
-                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} data-testid={`checkbox-${task.id}`} />
-                  <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityColor(task.priority).replace("text-", "bg-"))} />
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm font-medium truncate", task.completed && "line-through")}>{task.task}</p>
-                    <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}–{task.endTime}</p>
-                  </div>
-                  <Badge variant="outline" className={cn("text-xs border hidden sm:flex", getSubjectColor(task.subject))}>{task.subject}</Badge>
-                  <span className={cn("text-xs font-medium hidden md:block", priorityColor(task.priority))}>{task.priority}</span>
-                  {task.pomodoroSessions > 0 && (
-                    <span className="flex items-center gap-0.5 text-xs text-amber-400 hidden md:flex">
-                      <Flame className="h-3 w-3" />{task.pomodoroSessions}
-                    </span>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => openEdit(task)} className="text-muted-foreground hover:text-foreground transition-colors p-1" data-testid={`edit-task-${task.id}`}>
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => deleteTask(task.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1" data-testid={`delete-task-${task.id}`}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+              {filtered.map(task => {
+            const [ref, style, setStyle] = useDraggable({
+              boundary: { left: -200, right: 0 },
+              rubberbandResistance: 0.5,
+              onDragEnd: (event, velocity) => {
+                // Parse current translation
+                const match = style.transform?.match(/translate\((-?\d+\.?\d*)px, (-?\d+\.?\d*)px\)/);
+                if (match) {
+                  const translateX = parseFloat(match[1]);
+                  // Delete if dragged more than halfway or flicked with sufficient velocity
+                  if (translateX < -100 || velocity.x < -500) {
+                    deleteTask(task.id);
+                    return;
+                  }
+                }
+                // Snap back to 0 if not deleted
+                setStyle({
+                  transform: "translate(0, 0)",
+                  transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
+                });
+              }
+            });
+
+            return (
+              <div
+                ref={ref}
+                style={{ transform: style.transform, transition: style.transition }}
+                key={task.id}
+                data-testid={`task-row-${task.id}`}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors",
+                  task.completed && "opacity-50",
+                  style.transform && !style.transform.includes("translate(0") && "bg-muted/50"
+                )}
+              >
+                <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} data-testid={`checkbox-${task.id}`} />
+                <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityColor(task.priority).replace("text-", "bg-"))} />
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-sm font-medium truncate", task.completed && "line-through")}>{task.task}</p>
+                  <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}–{task.endTime}</p>
                 </div>
-              ))}
+                <Badge variant="outline" className={cn("text-xs border hidden sm:flex", getSubjectColor(task.subject))}>{task.subject}</Badge>
+                <span className={cn("text-xs font-medium hidden md:block", priorityColor(task.priority))}>{task.priority}</span>
+                {task.pomodoroSessions > 0 && (
+                  <span className="flex items-center gap-0.5 text-xs text-amber-400 hidden md:flex">
+                    <Flame className="h-3 w-3" />{task.pomodoroSessions}
+                  </span>
+                )}
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(task)} className="text-muted-foreground hover:text-foreground transition-colors p-1" data-testid={`edit-task-${task.id}`}>
+                    <Edit3 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => deleteTask(task.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1" data-testid={`delete-task-${task.id}`}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
             </div>
           )}
         </CardContent>

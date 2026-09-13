@@ -1,0 +1,111 @@
+# PixelFocusApp Project Summary
+
+## Overview
+PixelFocusApp is a productivity and focus application designed for students. It provides a suite of tools to help with studying, time management, and organization. The application is available as a web app and can be packaged as a standalone desktop application for Windows, macOS, and Linux using Electron.
+
+## Technology Stack
+- **Frontend**: React 19, Vite, TypeScript, Tailwind CSS
+- **State Management**: React Context (Auth, Store, Music, Timer, Theme), React Query (TanStack Query)
+- **UI Components**: Radix UI, Framer Motion, Lucide Icons, Sonner Toast, Recharts, Embla Carousel, etc.
+- **Build Tools**: pnpm (monorepo manager), esbuild, TypeScript
+- **Desktop**: Electron, electron-builder
+- **Backend**: Node.js, Express, Drizzle ORM, Firebase (for authentication and data sync)
+- **Database**: LocalForage (IndexedDB) for offline storage, with potential sync to Firebase
+- **Other**: Zod (schema validation), HookForm, Date-fns, Wouter (routing), clsx, class-variance-authority
+
+## Project Structure
+The project is a pnpm monorepo with the following key directories:
+
+```
+/artifacts
+  /focusforge        - Main web application (React/Vite)
+  /api-server        - Node.js/Express API server
+  /mockup-sandbox    - Tool for creating/previewing UI mockups
+/lib
+  /api-client-react  - React hooks/components for API communication
+  /api-spec          - API specifications (OpenAPI/Swagger)
+  /api-zod           - Zod schemas for API validation
+  /db                - Database layer and Drizzle ORM schemas
+/scripts             - Utility scripts (e.g., hello world example)
+/focusforge-desktop  - Electron wrapper for desktop builds
+/attached_assets     - Screenshots, design assets, and notes
+/node_modules        - Dependencies
+/pixel-builds        - Build outputs (likely)
+```
+
+## Key Features (from focusforge/src/App.tsx routes)
+- Dashboard - Main overview
+- Calendar - Schedule and events
+- Tasks - To-do list and task management
+- Matrix - Possibly a study or habit tracking matrix
+- Pomodoro - Pomodoro timer
+- Stopwatch - Stopwatch utility
+- Analytics - Productivity and usage statistics
+- Study Planner - Plan study sessions
+- Mock Tests - Practice tests or quizzes
+- Music - Music player or background sounds
+- Consistency - Habit or streak tracking
+- Settings - Application preferences
+- Onboarding - Initial setup walkthrough
+
+## Subproject Details
+
+### artifacts/focusforge
+The core application built with React and Vite. It includes:
+- Multiple context providers for global state (Auth, Store, Music, Timer, Theme)
+- Routing with Wouter (hash-based for Electron, browser history for web)
+- Integration with Firebase (via package.json dependencies) for authentication and data sync
+- Offline capability using localforage
+- Responsive design with Tailwind CSS
+- Features like drag-and-drop panels, modals, toast notifications, etc.
+
+### artifacts/api-server
+A Node.js/Express server that provides API endpoints for the application. It uses:
+- Drizzle ORM for database interactions
+- Pino for logging
+- CORS and cookie-parser middleware
+- Workspace dependencies: @workspace/api-zod and @workspace/db
+
+### artifacts/mockup-sandbox
+A Vite-based React application likely used for designing and previewing UI mockups or components. It includes:
+- Similar UI library dependencies as focusforge
+- Additional tools like chokidar (file watching) and fast-glob
+- A custom mockupPreviewPlugin.ts
+
+### focusforge-desktop
+An Electron wrapper that packages the focusforge web application into a desktop executable. It uses:
+- electron-builder to create platform-specific installers (.exe, .dmg, .AppImage)
+- Pre-built web assets from the focusforge application (served via file:// protocol)
+- Main process (main.js) and preload script (preload.js) for Electron integration
+- Data persistence in IndexedDB (via localforage) stored in the user's app data folder
+
+### lib/* (Shared Libraries)
+- **api-client-react**: Likely contains React hooks and components for consuming the API server.
+- **api-spec**: Contains API specifications (possibly OpenAPI/Swagger) for defining endpoints.
+- **api-zod**: Contains Zod schemas for request/response validation and type safety.
+- **db**: Contains database schema definitions and Drizzle ORM setup.
+
+### scripts
+Utility scripts for development tasks, currently containing a simple "hello" TypeScript example.
+
+## Notable Aspects
+1. **RTK (Rust Token Killer)**: The project uses RTK as a Claude Code hook to reduce token consumption when interacting with the AI assistant by filtering bash command output.
+2. **Monorepo Management**: Uses pnpm workspace with package cataloging for consistent dependency versions across packages.
+3. **Offline-First Design**: The application stores data locally using IndexedDB (via localforage) and can work offline, with potential sync to Firebase when online.
+4. **Cross-Platform Desktop**: The focusforge-desktop directory shows how the web app is packaged into native desktop installers for major operating systems.
+5. **Security Conscious**: The pnpm-workspace.yaml includes a minimumReleaseAge setting (1440 minutes) as a supply-chain attack defense.
+6. **Asset Directory**: The attached_assets directory contains screenshots, design notes, and experimental integrations (e.g., Gemini AI integration experiments).
+
+## Build and Development
+- **Web App**:
+  - dev: `pnpm --filter @workspace/focusforge run dev`
+  - build: `pnpm run build` (builds all packages)
+- **Desktop**:
+  - Navigate to focusforge-desktop and run `npm install` then `npm run build:win` (or mac/linux)
+- **API Server**:
+  - dev: `pnpm --filter @workspace/api-server run dev`
+
+## Handoff Notes
+This project is a feature-rich productivity suite with a clean, modern UI. It is ready for further development or deployment. The monorepo structure allows for independent development of the web app, API, and shared libraries. The desktop wrapper provides a seamless offline experience.
+
+For any questions regarding the architecture or specific modules, refer to the source code and inline documentation.

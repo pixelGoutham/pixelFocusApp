@@ -65,7 +65,38 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Apple Fluid Typography */
+  --font-size: clamp(0.875rem, 0.5rem + 0.75vw, 1rem);
+  --font-size-heading: clamp(1.5rem, 0.5rem + 2vw, 3rem);
+  --tracking: 0em;
+  --tracking-heading: -0.02em;
+  --leading: 1.5;
+  --leading-heading: 1.1;
 }
+
+html {
+  font-size: var(--font-size);
+  font-optical-sizing: auto;
+}
+
+body {
+  letter-spacing: var(--tracking);
+  line-height: var(--leading);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-heading);
+}
+
+/* Fluid headings */
+h1 { font-size: var(--font-size-heading); }
+h2 { font-size: calc(var(--font-size-heading) * 0.9); }
+h3 { font-size: calc(var(--font-size-heading) * 0.8); }
+h4 { font-size: calc(var(--font-size-heading) * 0.7); }
+h5 { font-size: calc(var(--font-size-heading) * 0.6); }
+h6 { font-size: calc(var(--font-size-heading) * 0.5); }
 
 /* ── Light mode (default) ──────────────────────────────────────────────── */
 :root {
@@ -299,5 +330,33 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
     border-radius: 2px;
+  }
+
+  .active-scale {
+    @apply active:scale-95;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  /* Example: increase opacity of blurred backgrounds */
+  .blur {
+    backdrop-filter: none;
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media (prefers-contrast: more) {
+  * {
+    border-width: 2px;
   }
 }
