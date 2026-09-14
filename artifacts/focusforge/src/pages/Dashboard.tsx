@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { format, isToday, parseISO, startOfWeek, addDays } from "date-fns";
 import { useStore } from "@/lib/StoreContext";
-import { Clock, CheckSquare, Flame, Target, CalendarDays, Timer, TrendingUp } from "lucide-react";
+import { Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,23 +30,23 @@ export function getSubjectColor(subject: string): string {
   return SUBJECT_COLORS[subject];
 }
 
-function StatCard({ icon: Icon, label, value, sub, color }: { icon: React.ElementType; label: string; value: string; sub?: string; color: string }) {
+function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="bg-card border-border hover:border-primary/30 transition-colors">
+      <Card className="bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:border-white/[0.15] transition-colors">
         <CardContent className="p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-              <p className="text-2xl font-bold mt-1 font-mono">{value}</p>
-              {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+              <p className="text-4xl font-semibold tracking-[-0.02em] leading-none font-mono">{value}</p>
+              {sub && <p className="text-xs text-muted-foreground/50 tracking-wide mt-0.5">{sub}</p>}
             </div>
-            <div className={cn("flex items-center justify-center h-10 w-10 rounded-lg", color)}>
-              <Icon className="h-5 w-5" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg">
+              <Icon weight="fill" className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
         </CardContent>
@@ -121,8 +121,8 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-sm mt-0.5">{format(new Date(), "EEEE, d MMMM yyyy")} — Stay focused. Your future is built daily.</p>
         </div>
         <Link href="/pomodoro">
-          <Button data-testid="button-start-focus" size="sm" className="gap-2">
-            <Timer className="h-4 w-4" />
+          <Button data-testid="button-start-focus" size="sm" className="gap-2 bg-primary text-primary-foreground shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.2)]">
+            <Timer className="h-4 w-4 text-muted-foreground" />
             Start Focus Session
           </Button>
         </Link>
@@ -130,10 +130,10 @@ export default function Dashboard() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock} label="Study Time" value={`${studyHours}h ${studyMins}m`} sub="today" color="bg-primary/10 text-primary" />
-        <StatCard icon={CheckSquare} label="Tasks Done" value={`${completedToday} / ${todayTasks.length}`} sub="today" color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard icon={TrendingUp} label="Focus Score" value={`${focusScore}%`} sub="today" color="bg-cyan-500/10 text-cyan-400" />
-        <StatCard icon={Flame} label="Day Streak" value={`${settings.currentStreak}`} sub="days" color="bg-amber-500/10 text-amber-400" />
+        <StatCard icon={Clock} label="Study Time" value={`${studyHours}h ${studyMins}m`} sub="today" />
+        <StatCard icon={CheckSquare} label="Tasks Done" value={`${completedToday} / ${todayTasks.length}`} sub="today" />
+        <StatCard icon={TrendUp} label="Focus Score" value={`${focusScore}%`} sub="today" />
+        <StatCard icon={Fire} label="Day Streak" value={`${settings.currentStreak}`} sub="days" />
       </div>
 
       {/* Middle Row */}
@@ -150,7 +150,7 @@ export default function Dashboard() {
             <CardContent className="space-y-2">
               {todayTasks.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <CalendarBlank className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
                   <p>No tasks today. Import a CSV or add tasks in the calendar.</p>
                 </div>
               ) : todayTasks.map(task => (

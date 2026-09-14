@@ -123,8 +123,8 @@ h6 { font-size: calc(var(--font-size-heading) * 0.5); }
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 9%;
   --popover-border: 240 5% 87%;
-  --primary: 43 96% 42%;
-  --primary-foreground: 20 14% 10%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 240 5% 91%;
   --secondary-foreground: 240 10% 9%;
   --muted: 240 5% 91%;
@@ -198,8 +198,8 @@ h6 { font-size: calc(var(--font-size-heading) * 0.5); }
   --popover: 240 10% 5.9%;
   --popover-foreground: 0 0% 98%;
   --popover-border: 240 8% 15%;
-  --primary: 43 96% 52%;
-  --primary-foreground: 20 14% 10%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
   --secondary: 240 8% 12%;
   --secondary-foreground: 0 0% 98%;
   --muted: 240 8% 10%;
