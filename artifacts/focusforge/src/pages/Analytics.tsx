@@ -3,21 +3,21 @@ import { format, startOfWeek, addDays, subDays, parseISO } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
 import { useStore } from "@/lib/StoreContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Flame, BookOpen, Timer } from "lucide-react";
+import { Clock, Fire, BookOpen, Timer } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = ["hsl(263,70%,50%)", "hsl(186,94%,42%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)", "hsl(0,72%,51%)", "hsl(217,91%,60%)", "hsl(330,80%,60%)"];
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string; color: string }) {
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:border-white/[0.15] transition-colors">
       <CardContent className="p-5 flex items-center gap-4">
-        <div className={cn("flex items-center justify-center h-10 w-10 rounded-lg", color)}>
-          <Icon className="h-5 w-5" />
+        <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-white/10">
+          <Icon weight="fill" className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-          <p className="text-xl font-bold font-mono">{value}</p>
+          <p className="text-xs text-white/50 uppercase tracking-wide">{label}</p>
+          <p className="text-4xl font-semibold tracking-[-0.02em] leading-none font-mono text-white">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -79,10 +79,10 @@ export default function Analytics() {
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock} label="Total Study Hours" value={`${totalHours}h`} color="bg-primary/10 text-primary" />
-        <StatCard icon={Flame} label="Current Streak" value={`${settings.currentStreak}d`} color="bg-amber-500/10 text-amber-400" />
-        <StatCard icon={BookOpen} label="Most Studied" value={mostStudied} color="bg-cyan-500/10 text-cyan-400" />
-        <StatCard icon={Timer} label="Total Pomodoros" value={`${totalPomodoros}`} color="bg-emerald-500/10 text-emerald-400" />
+        <StatCard icon={Clock} label="Total Study Hours" value={`${totalHours}h`} color="bg-white/10 text-white" />
+        <StatCard icon={Fire} label="Current Streak" value={`${settings.currentStreak}d`} color="bg-white/10 text-white" />
+        <StatCard icon={BookOpen} label="Most Studied" value={mostStudied} color="bg-white/10 text-white" />
+        <StatCard icon={Timer} label="Total Pomodoros" value={`${totalPomodoros}`} color="bg-white/10 text-white" />
       </div>
 
       {/* Weekly Bar + Pie */}
