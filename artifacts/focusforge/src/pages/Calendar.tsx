@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Upload, CalendarDays, X, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Upload, CalendarBlank, X, Check } from "@phosphor-icons/react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -138,11 +138,11 @@ export default function Calendar() {
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset(w => w - 1)}>
-            <ChevronLeft className="h-4 w-4" />
+            <ArrowLeft weight="fill" className="h-4 w-4 text-muted-foreground" />
           </Button>
           <Button variant="outline" size="sm" className="h-8 px-3 text-xs" onClick={() => setWeekOffset(0)}>Today</Button>
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setWeekOffset(w => w + 1)}>
-            <ChevronRight className="h-4 w-4" />
+            <ArrowRight weight="fill" className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
         <span className="text-sm font-medium">
@@ -150,12 +150,12 @@ export default function Calendar() {
         </span>
         <div className="flex-1" />
         <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => fileRef.current?.click()} data-testid="button-import-csv">
-          <Upload className="h-3.5 w-3.5" />
+          <Upload weight="fill" className="h-3.5 w-3.5 text-muted-foreground" />
           Import CSV
         </Button>
         <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFile} />
         <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => { setSelectedDate(format(new Date(), "yyyy-MM-dd")); setForm(EMPTY_FORM); setDialogOpen(true); }} data-testid="button-add-task-cal">
-          <Plus className="h-3.5 w-3.5" />
+          <Plus weight="fill" className="h-3.5 w-3.5 text-primary-foreground" />
           Add Task
         </Button>
       </div>
@@ -287,7 +287,7 @@ export default function Calendar() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
+              <Upload weight="fill" className="h-4 w-4 text-muted-foreground" />
               Import {csvPreview?.length} Tasks from CSV
             </DialogTitle>
           </DialogHeader>
@@ -316,10 +316,10 @@ export default function Calendar() {
           </div>
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setCsvPreview(null)} className="gap-2">
-              <X className="h-4 w-4" /> Cancel
+              <X weight="fill" className="h-4 w-4 text-muted-foreground" /> Cancel
             </Button>
             <Button onClick={handleConfirmImport} disabled={csvImporting} className="gap-2" data-testid="button-confirm-import">
-              <Check className="h-4 w-4" /> Import All
+              <Check weight="fill" className="h-4 w-4 text-primary-foreground" /> Import All
             </Button>
           </div>
         </DialogContent>

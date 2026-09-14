@@ -122,7 +122,7 @@ export default function Dashboard() {
         </div>
         <Link href="/pomodoro">
           <Button data-testid="button-start-focus" size="sm" className="gap-2 bg-primary text-primary-foreground shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.2)]">
-            <Timer className="h-4 w-4 text-muted-foreground" />
+            <Timer className="h-4 w-4 text-primary-foreground" />
             Start Focus Session
           </Button>
         </Link>
