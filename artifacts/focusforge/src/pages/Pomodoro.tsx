@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
-import { Play, Pause, SkipForward, RotateCcw, Settings2, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, SkipForward, ArrowCounterClockwise, Faders, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getSubjectColor } from "./Dashboard";
 import { useState } from "react";
+import { useTheme } from "@/lib/ThemeContext";
 
 function playBeep(ctx: AudioContext | null) {
   if (!ctx) return;
@@ -37,6 +38,7 @@ export default function Pomodoro() {
   const [draftWork, setDraftWork] = useState(pom.workDur);
   const [draftBreak, setDraftBreak] = useState(pom.breakDur);
   const [draftLong, setDraftLong] = useState(pom.longBreakDur);
+  const { resolvedTheme } = useTheme();
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const getAudioCtx = () => {
@@ -145,14 +147,25 @@ export default function Pomodoro() {
   };
 
   const phaseLabel = pom.phase === "work" ? "Focus" : pom.phase === "break" ? "Short Break" : "Long Break";
-  const phaseColor = pom.phase === "work" ? "hsl(var(--primary))" : pom.phase === "break" ? "hsl(var(--chart-3))" : "hsl(var(--chart-2))";
+  const phaseColor = resolvedTheme === 'dark'
+    ? (pom.phase === "work"
+      ? "white"
+      : pom.phase === "break"
+        ? "rgba(255, 255, 255, 0.4)"
+        : "rgba(255, 255, 255, 0.2)"
+    )
+    : "black";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timer */}
         <div className="lg:col-span-2">
-          <Card className="bg-card border-border">
+          <Card className={cn(
+            "bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+            resolvedTheme === 'dark' ? "" : "bg-black/[0.03] border border-black/[0.08] shadow-[inset_0_1px_0_0_rgba(0,0,0,0.05)]"
+          )}
+          >
             <CardContent className="p-8 flex flex-col items-center gap-6">
               <div className="flex gap-2">
                 {(["work", "break", "longBreak"] as PomodoroPhase[]).map(p => (
@@ -160,7 +173,9 @@ export default function Pomodoro() {
                     key={p}
                     onClick={() => handlePhaseClick(p)}
                     className={cn("px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                      pom.phase === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      pom.phase === p
+                        ? (resolvedTheme === 'dark' ? "bg-white text-black" : "bg-black text-white")
+                        : (resolvedTheme === 'dark' ? "bg-white/10 text-white/50 hover:bg-white/20 hover:text-white" : "bg-black/10 text-black/50 hover:bg-black/20 hover:text-black")
                     )}
                   >
                     {p === "work" ? "Focus" : p === "break" ? "Short Break" : "Long Break"}
@@ -184,7 +199,10 @@ export default function Pomodoro() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-mono font-bold tabular-nums">{mm}:{ss}</span>
+                  <span className={cn(
+                    "text-6xl font-semibold tracking-[-0.04em] font-mono tabular-nums leading-none",
+                    resolvedTheme === 'dark' ? "text-white" : "text-black"
+                  )}>{mm}:{ss}</span>
                   <span className="text-sm text-muted-foreground mt-1">{phaseLabel}</span>
                   {pom.selectedSubject && <span className="text-xs text-primary mt-1">{pom.selectedSubject}</span>}
                 </div>
@@ -193,7 +211,7 @@ export default function Pomodoro() {
               {/* Controls */}
               <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={resetPom} data-testid="button-reset">
-                  <RotateCcw className="h-4 w-4" />
+                  <ArrowCounterClockwise className="h-4 w-4" weight="bold" />
                 </Button>
                 <Button
                   size="lg"
@@ -201,11 +219,11 @@ export default function Pomodoro() {
                   onClick={() => pom.running ? pausePom() : startPom()}
                   data-testid="button-play-pause"
                 >
-                  {pom.running ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
+                  {pom.running ? <Pause className="h-5 w-5 mr-2" weight="fill" /> : <Play className="h-5 w-5 mr-2" weight="fill" />}
                   {pom.running ? "Pause" : "Start"}
                 </Button>
                 <Button variant="outline" size="icon" onClick={handleSkip} data-testid="button-skip">
-                  <SkipForward className="h-4 w-4" />
+                  <SkipForward className="h-4 w-4" weight="fill" />
                 </Button>
               </div>
 
@@ -213,7 +231,9 @@ export default function Pomodoro() {
               <div className="flex gap-2">
                 {Array.from({ length: 4 }, (_, i) => (
                   <div key={i} className={cn("h-3 w-3 rounded-full border-2 transition-colors",
-                    i < (pom.completedSessions % 4) ? "bg-primary border-primary" : "border-muted-foreground"
+                    i < (pom.completedSessions % 4)
+                      ? (resolvedTheme === 'dark' ? "bg-white border-white" : "bg-black border-black")
+                      : (resolvedTheme === 'dark' ? "border-white/20" : "border-black/20")
                   )} />
                 ))}
               </div>
@@ -230,10 +250,10 @@ export default function Pomodoro() {
                   <span className="text-muted-foreground text-xs">Auto-start next</span>
                 </label>
                 <button onClick={() => updatePom({ muted: !pom.muted })} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {pom.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  {pom.muted ? <VolumeX className="h-4 w-4" weight="fill" /> : <SpeakerHigh className="h-4 w-4" weight="fill" />}
                 </button>
                 <button onClick={() => { setDraftWork(pom.workDur); setDraftBreak(pom.breakDur); setDraftLong(pom.longBreakDur); setShowSettings(s => !s); }} className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Settings2 className="h-4 w-4" />
+                  <Faders className="h-4 w-4" weight="bold" />
                 </button>
               </div>
 
@@ -254,7 +274,11 @@ export default function Pomodoro() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <Card className="bg-card border-border">
+          <Card className={cn(
+            "bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+            resolvedTheme === 'dark' ? "" : "bg-black/[0.03] border border-black/[0.08] shadow-[inset_0_1px_0_0_rgba(0,0,0,0.05)]"
+          )}
+          >
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Select Subject & Task</CardTitle>
             </CardHeader>
@@ -279,7 +303,11 @@ export default function Pomodoro() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border">
+          <Card className={cn(
+            "bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+            resolvedTheme === 'dark' ? "" : "bg-black/[0.03] border border-black/[0.08] shadow-[inset_0_1px_0_0_rgba(0,0,0,0.05)]"
+          )}
+          >
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Today's Sessions</CardTitle>
             </CardHeader>
@@ -289,7 +317,9 @@ export default function Pomodoro() {
               ) : todaySessions.map((s, i) => (
                 <div key={s.id} className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground w-4">#{i + 1}</span>
-                  <Badge variant="outline" className={cn("text-xs border", getSubjectColor(s.subject))}>{s.subject}</Badge>
+                  <Badge variant="outline" className={cn("text-xs border", getSubjectColor(s.subject),
+                    resolvedTheme === 'dark' ? "!border-white/20 !bg-white/5 !text-white" : "!border-black/20 !bg-black/5 !text-black"
+                  )}>{s.subject}</Badge>
                   <span className="text-muted-foreground ml-auto">{s.durationMinutes}m</span>
                 </div>
               ))}

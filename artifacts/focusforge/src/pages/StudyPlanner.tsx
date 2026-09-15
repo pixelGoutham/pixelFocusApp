@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, startOfWeek, addDays } from "date-fns";
-import { Plus, Trash2, BookOpen, RefreshCw } from "lucide-react";
+import { Plus, Trash, BookOpen, ArrowsClockwise } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const PALETTE = [
-  "#7C3AED", "#06B6D4", "#22C55E", "#F59E0B", "#EF4444", "#3B82F6", "#EC4899", "#F97316",
+  "#8B5CF6", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#6366F1", "#EC4899", "#F97316",
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -94,12 +94,12 @@ export default function StudyPlanner() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Subject Management */}
-      <Card className="bg-card border-border">
+      <Card className="bg-white border-zinc-200 shadow-sm dark:bg-white/[0.03] dark:border-white/[0.08] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span>Subjects</span>
             <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={generateFromTasks} data-testid="button-generate">
-              <RefreshCw className="h-3 w-3" />
+              <ArrowsClockwise className="h-3 w-3" weight="bold" />
               Generate from Tasks
             </Button>
           </CardTitle>
@@ -107,11 +107,11 @@ export default function StudyPlanner() {
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {subjects.map(s => (
-              <div key={s.name} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/30 group">
+              <div key={s.name} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-zinc-100 border-zinc-200 text-zinc-900 dark:bg-white/[0.05] dark:border-white/[0.1] dark:text-white group">
                 <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
                 <span className="text-sm font-medium">{s.name}</span>
                 <button onClick={() => removeSubject(s.name)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all" data-testid={`remove-subject-${s.name}`}>
-                  <Trash2 className="h-3 w-3" />
+                  <Trash className="h-3 w-3" weight="fill" />
                 </button>
               </div>
             ))}
@@ -123,7 +123,7 @@ export default function StudyPlanner() {
             <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="h-8 w-8 rounded border border-border cursor-pointer bg-transparent" />
             <Input value={newSubject} onChange={e => setNewSubject(e.target.value)} placeholder="New subject name" className="flex-1" onKeyDown={e => e.key === "Enter" && addSubject()} data-testid="input-new-subject" />
             <Button size="sm" className="gap-1" onClick={addSubject} data-testid="button-add-subject">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" weight="bold" />
               Add
             </Button>
           </div>
@@ -131,7 +131,7 @@ export default function StudyPlanner() {
       </Card>
 
       {/* Planner Grid */}
-      <Card className="bg-card border-border overflow-x-auto">
+      <Card className="bg-white border-zinc-200 shadow-sm dark:bg-white/[0.03] dark:border-white/[0.08] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-x-auto">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
             Weekly Planner — {format(weekStart, "d MMM")} to {format(addDays(weekStart, 6), "d MMM yyyy")}
@@ -140,7 +140,7 @@ export default function StudyPlanner() {
         <CardContent>
           {subjects.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" weight="bold" />
               <p className="text-sm">Add subjects above to start planning your week.</p>
             </div>
           ) : (
@@ -179,14 +179,14 @@ export default function StudyPlanner() {
                               step={0.5}
                               value={val || ""}
                               onChange={e => setCell(s.name, dayStr, Number(e.target.value))}
-                              className="w-14 h-8 text-center text-sm bg-muted border border-border rounded-md focus:outline-none focus:border-primary tabular-nums"
+                              className="w-14 h-8 text-center text-sm rounded-md focus:outline-none transition-colors tabular-nums bg-zinc-50 border border-zinc-200 text-zinc-900 focus:bg-white focus:border-zinc-400 dark:bg-white/[0.03] dark:border-white/[0.1] dark:text-white dark:focus:bg-white/[0.08] dark:focus:border-white/[0.3]"
                               placeholder="0"
                               data-testid={`cell-${s.name}-${dayStr}`}
                             />
                           </td>
                         );
                       })}
-                      <td className="py-2 px-2 text-center font-mono font-medium text-sm text-primary">
+                      <td className="py-2 px-2 text-center font-mono font-medium text-sm text-zinc-900 dark:text-white tracking-[-0.02em] font-semibold">
                         {rowTotal(s.name).toFixed(1)}h
                       </td>
                     </tr>
@@ -196,11 +196,11 @@ export default function StudyPlanner() {
                   <tr className="border-t-2 border-border">
                     <td className="py-2 pr-4 text-xs font-semibold text-muted-foreground">Daily Total</td>
                     {weekDays.map((d, i) => (
-                      <td key={i} className="py-2 px-2 text-center text-xs font-mono font-semibold text-muted-foreground">
+                      <td key={i} className="py-2 px-2 text-center text-xs font-mono font-semibold text-zinc-900 dark:text-white tracking-[-0.02em]">
                         {colTotal(format(d, "yyyy-MM-dd")).toFixed(1)}h
                       </td>
                     ))}
-                    <td className="py-2 px-2 text-center text-xs font-mono font-bold text-primary">
+                    <td className="py-2 px-2 text-center text-xs font-mono font-bold text-zinc-900 dark:text-white tracking-[-0.02em]">
                       {weekDays.reduce((a, d) => a + colTotal(format(d, "yyyy-MM-dd")), 0).toFixed(1)}h
                     </td>
                   </tr>
