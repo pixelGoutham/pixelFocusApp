@@ -144,3 +144,44 @@ For any questions regarding the architecture or specific modules, refer to the s
 - Drag physics: Velocity tracking (pixels/second), rubberband() progressive resistance
 - Button animations: Critically damped Framer Motion springs (bounce: 0, duration: 0.4)
 - Overlay positioning: Removed fixed positioning overrides, let Radix UI handle natural anchor-based positioning
+
+**Date: 2026-09-15**
+
+### Work Completed Today:
+- Applied apple-design skill to StudyPlanner.tsx for adaptive Light/Dark theme support
+- Implemented all four steps of the Apple design system upgrade:
+
+  **Step 1: Planner Icon Migration**
+  - Migrated from lucide-react to @phosphor-icons/react
+  - Replaced RefreshCw with ArrowsClockwise (weight="bold")
+  - Replaced Trash2 with Trash (weight="fill")
+  - Added weight="bold" to Plus and BookOpen icons
+
+  **Step 2: Adaptive Palette & Subject Pills**
+  - Updated PALETTE with refined mid-tone colors: ["#8B5CF6", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#6366F1", "#EC4899", "#F97316"]
+  - Applied adaptive classes to subject pills: bg-zinc-100 border-zinc-200 text-zinc-900 with dark mode variants (dark:bg-white/[0.05] dark:border-white/[0.1] dark:text-white)
+
+  **Step 3: Adaptive Material Elevation**
+  - Upgraded both Card containers with Apple's native surface styling:
+    - Light: bg-white border-zinc-200 shadow-sm
+    - Dark: dark:bg-white/[0.03] dark:border-white/[0.08] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]
+
+  **Step 4: Grid & Input Dual-Theme Glass**
+  - Applied premium adaptive treatment to input elements:
+    - Light: bg-zinc-50 border-zinc-200 text-zinc-900
+    - Dark: dark:bg-white/[0.03] dark:border-white/[0.1] dark:text-white
+    - Focus states: focus:bg-white focus:border-zinc-400 / dark:focus:bg-white/[0.08] dark:focus:border-white/[0.3]
+  - Enhanced total calculations with optical number formatting:
+    - Added tracking-[-0.02em] for improved number rendering
+    - Applied adaptive text colors: text-zinc-900 dark:text-white font-semibold
+
+- Verified no business logic, routing, or data storage changes were made
+- Confirmed zero new dependencies were introduced
+- Validated build success with only expected warnings
+
+### Technical Details:
+- All icon mappings verified correct per Phosphor icon specifications
+- Adaptive classes ensure seamless transitions between light and dark modes
+- Optical number tracking applied for improved readability
+- Card containers use Apple's native surface elevation system
+- Theme-aware styling maintains WCAG contrast compliance in both modes
