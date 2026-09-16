@@ -65,7 +65,7 @@ function AppRouter() {
   );
 }
 
-const isElectron = import.meta.env.VITE_ELECTRON === "true";
+const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 
 function App() {
   return (

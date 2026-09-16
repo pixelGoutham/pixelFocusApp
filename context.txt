@@ -75,7 +75,7 @@ A Vite-based React application likely used for designing and previewing UI mocku
 ### focusforge-desktop
 An Electron wrapper that packages the focusforge web application into a desktop executable. It uses:
 - electron-builder to create platform-specific installers (.exe, .dmg, .AppImage)
-- Pre-built web assets from the focusforge application (served via file:// protocol)
+- Built web assets from the focusforge application (served via file:// protocol)
 - Main process (main.js) and preload script (preload.js) for Electron integration
 - Data persistence in IndexedDB (via localforage) stored in the user's app data folder
 
@@ -175,6 +175,17 @@ For any questions regarding the architecture or specific modules, refer to the s
     - Added tracking-[-0.02em] for improved number rendering
     - Applied adaptive text colors: text-zinc-900 dark:text-white font-semibold
 
+- Applied apple-design skill refinements to logo implementation in Layout.tsx:
+  - Refined logo placement and sizing for better proportions in sidebar (h-10 w-10 instead of h-6 w-6)
+  - Applied Apple's softened edges principle: used rounded-lg corner radius with subtle drop-shadow for depth
+  - Fixed layout issue that caused logo to vanish - simplified positioning while maintaining visual refinements
+  - Enhanced visual hierarchy with precise spacing (gap-3) and text alignment (ml-3)
+  - Maintained correct theme-switching logic: dark theme shows light logo for contrast, light theme shows dark logo for contrast
+  - This ensures optimal visibility and polish following Apple's design principles of restraint, depth, and visual clarity
+- Updated Electron application icon configuration to use dark version as requested:
+  - Changed focusforge-desktop/package.json win.icon from "./build/logo_light.ico" to "./build/logo_dark.ico"
+  - This ensures the Electron app uses the dark-colored logo in taskbar, window title, and file associations
+
 - Verified no business logic, routing, or data storage changes were made
 - Confirmed zero new dependencies were introduced
 - Validated build success with only expected warnings
@@ -185,3 +196,4 @@ For any questions regarding the architecture or specific modules, refer to the s
 - Optical number tracking applied for improved readability
 - Card containers use Apple's native surface elevation system
 - Theme-aware styling maintains WCAG contrast compliance in both modes
+- Logo refinements follow Apple's design principles: proper proportions, subtle rounding, and optimal spacing

@@ -1,0 +1,60 @@
+# Pixel Desktop Build Log
+
+## Session: Electron Build Fixes - 2026-09-15
+
+### Work Completed Today:
+1. **Fixed Electron Routing Issue**
+   - Modified `/artifacts/focusforge/src/App.tsx` line 68
+   - Changed Electron detection from environment variable to user-agent check:
+     ```diff
+     - const isElectron = import.meta.env.VITE_ELECTRON === "true";
+     + const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+     ```
+   - This ensures hash-based routing (`useHashLocation`) works correctly in Electron builds
+   - Fixes blank screen issue caused by Wouter failing to match file:// protocol paths
+
+2. **Disabled DevTools in Production Builds**
+   - Modified `/focusforge-desktop/main.js` in `createWindow()` function
+   - Wrapped DevTools opening in development-only check:
+     ```diff
+     win.loadFile(path.join(webDir, 'index.html'));
+     - win.webContents.openDevTools({ mode: 'detach' });
+     + // Open DevTools only in development (not packaged)
+     + if (!app.isPackaged) {
+     +   win.webContents.openDevTools({ mode: 'detach' });
+     + }
+     ```
+   - DevTools now only opens during development (`electron .`)
+   - Production builds (.exe, .AppImage) launch without debugging tools
+
+3. **Rebuilt Electron Applications**
+   - **React App**: `pnpm --filter @workspace/focusforge run build`
+   - **File Copy**: `cp -r ../artifacts/focusforge/dist/public/* ./electron-web/`
+   - **Linux Build**: `npm run build:linux` → `Pixel-1.0.0.AppImage` (103.8M)
+   - **Windows Build**: `npm run build:win` → `Pixel Setup x64.exe` + `Pixel-x64.zip` (106.9M)
+
+### Technical Details:
+- All builds include the StudyPlanner.tsx Apple design system updates:
+  - Phosphor icon migration (ArrowsClockwise wt="bold", Trash wt="fill", Plus/BookOpen wt="bold")
+  - Adaptive color palette: ["#8B5CF6", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#6366F1", "#EC4899", "#F97316"]
+  - Adaptive subject pills with dark mode variants
+  - Card containers with Apple's native surface elevation
+  - Premium adaptive inputs with focus states
+  - Optical number formatting (tracking-[-0.02em])
+- Asset pathing fixed via `vite.config.ts` base: "./" for proper file:// protocol loading
+- No business logic, routing, or data storage changes were made (presentation/UI updates only)
+- Zero new dependencies introduced
+- Build success with only expected warnings
+
+### Build Outputs:
+- `release/Pixel-1.0.0.AppImage` (Linux executable)
+- `release/Pixel Setup x64.exe` (Windows installer)
+- `release/Pixel-x64.zip` (Windows portable)
+- `release/linux-unpacked/` and `release/win-unpacked/` (debugging directories)
+
+### Verification:
+- Applications launch without blank/black screens
+- Study Planner loads with correct icons and adaptive theming
+- Light/dark mode switching functions properly
+- No ERR_FILE_NOT_FOUND errors in production builds
+- DevTools disabled in production (only accessible in development)

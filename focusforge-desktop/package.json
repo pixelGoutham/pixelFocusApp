@@ -29,9 +29,14 @@
       {
         "from": "electron-web",
         "to": "electron-web"
+      },
+      {
+        "from": "build",
+        "to": "build"
       }
     ],
     "win": {
+      "icon": "./build/logo_dark.ico",
       "target": [
         {
           "target": "zip",
@@ -46,7 +51,8 @@
       "target": "dmg"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "./build/logo_dark.png"
     },
     "nsis": {
       "oneClick": false,

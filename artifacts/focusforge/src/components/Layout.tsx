@@ -156,15 +156,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <Zap className="h-6 w-6 text-primary flex-shrink-0" />
+          <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+            {/* Theme-switching logo with Apple-inspired refinement */}
+            <img
+              src={resolvedTheme === 'dark' ? '/logo_light.ico' : '/logo_dark.ico'}
+              alt="Pixel Logo"
+              className="h-10 w-10 flex-shrink-0 rounded-lg drop-shadow-[0_1px_2px_rgb(0,0,0,0.1)]"
+            />
+            {/* Optional: Keep text logo - removes if logo includes text */}
             <AnimatePresence>
               {!sidebarCollapsed && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 'auto' }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="font-bold text-lg tracking-tight text-foreground"
+                  className="font-bold text-lg tracking-tight text-foreground ml-3"
                 >
                   Pixel
                 </motion.span>

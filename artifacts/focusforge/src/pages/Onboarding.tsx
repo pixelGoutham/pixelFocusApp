@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Zap, Clock, Plus, Trash2, BookOpen, ChevronRight, Check } from "lucide-react";
+import { useTheme } from "@/lib/ThemeContext";
+import { Clock, Plus, Trash2, BookOpen, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState(1);
+  const { resolvedTheme } = useTheme();
 
   // Step 1 — pre-fill from auth if available
   const [name, setName] = useState(() => user?.displayName ?? "");
@@ -139,13 +141,19 @@ export default function Onboarding() {
                         className="h-16 w-16 rounded-full object-cover border-2 border-primary/30 shadow-lg"
                       />
                       <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-                        <Zap className="h-3.5 w-3.5 text-primary" />
+                        <img
+                          src={resolvedTheme === 'dark' ? 'logo_light.ico' : 'logo_dark.ico'}
+                          alt="Pixel Logo"
+                          className="h-3.5 w-3.5 flex-shrink-0 drop-shadow-sm"
+                        />
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-2">
-                      <Zap className="h-8 w-8 text-primary" />
-                    </div>
+                    <img
+                      src={resolvedTheme === 'dark' ? 'logo_light.ico' : 'logo_dark.ico'}
+                      alt="Pixel Logo"
+                      className="h-14 w-14 flex-shrink-0 rounded-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.08)] mb-2"
+                    />
                   )}
                   <h1 className="text-2xl font-bold tracking-tight">
                     {user?.displayName ? `Hey, ${user.displayName.split(" ")[0]}!` : "Welcome to Pixel"}

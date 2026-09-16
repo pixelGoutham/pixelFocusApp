@@ -27,6 +27,10 @@ function createWindow() {
     ? path.join(process.resourcesPath, 'electron-web')
     : path.join(__dirname, 'electron-web');
   win.loadFile(path.join(webDir, 'index.html'));
+  // Open DevTools only in development (not packaged)
+  if (!app.isPackaged) {
+    win.webContents.openDevTools({ mode: 'detach' });
+  }
 
   // Show window once content is ready (prevents white flash)
   win.once('ready-to-show', () => win.show());
