@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/AuthContext";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
-import { MusicProvider } from "@/lib/MusicContext";
+import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 import { TimerProvider } from "@/lib/TimerContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { Layout } from "@/components/Layout";
@@ -75,7 +75,7 @@ function App() {
           <StoreProvider>
             <ThemeProvider>
             <TimerProvider>
-              <MusicProvider>
+              <MusicPlayerProvider>
                 {isElectron ? (
                   <WouterRouter hook={useHashLocation}>
                     <AppRouter />
@@ -85,7 +85,7 @@ function App() {
                     <AppRouter />
                   </WouterRouter>
                 )}
-              </MusicProvider>
+              </MusicPlayerProvider>
             </TimerProvider>
             </ThemeProvider>
           </StoreProvider>
