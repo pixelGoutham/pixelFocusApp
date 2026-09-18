@@ -159,7 +159,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
             {/* Theme-switching logo with Apple-inspired refinement */}
             <img
-              src={resolvedTheme === 'dark' ? '/logo_light.ico' : '/logo_dark.ico'}
+              src={resolvedTheme === 'dark' ? 'logo_light.ico' : 'logo_dark.ico'}
               alt="Pixel Logo"
               className="h-10 w-10 flex-shrink-0 rounded-lg drop-shadow-[0_1px_2px_rgb(0,0,0,0.1)]"
             />
