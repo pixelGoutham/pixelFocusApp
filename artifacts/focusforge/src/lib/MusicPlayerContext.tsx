@@ -137,17 +137,7 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
       playerReady: true,
       duration
     }));
-
-    // Start progress tracking if we're supposed to be playing
-    if (state.isPlaying) {
-      progressIntervalRef.current = setInterval(() => {
-        if (playerRef.current) {
-          const currentTime = playerRef.current.getCurrentTime();
-          setState(prev => ({ ...prev, progress: currentTime }));
-        }
-      }, 1000);
-    }
-  }, [state.isPlaying]);
+  }, []);
 
   // Actions
   const playTrack = useCallback(async (track: Track) => {

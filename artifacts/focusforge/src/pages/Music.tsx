@@ -1,21 +1,25 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useMusicPlayer } from '@/lib/MusicPlayerContext';
-import YouTubePlayer from '@/lib/YouTubePlayer';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { 
-  MusicNotes, 
-  CloudRain, 
-  FolderSimple, 
-  Play, 
-  Pause, 
-  SpeakerHigh, 
-  SpeakerX, 
-  Link, 
+import {
+  MusicNotes,
+  CloudRain,
+  FolderSimple,
+  Play,
+  Pause,
+  SpeakerHigh,
+  SpeakerX,
+  Link,
   ArrowsClockwise,
   List,
-  X
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Lyrics,
+  Shuffle
 } from '@phosphor-icons/react';
+import { fetchYouTubeMetadata } from '@/lib/youtube-utils';
 
 export const PLAYER_HEIGHT = 80;
 
@@ -40,7 +44,7 @@ export default function Music() {
   // Spring animation config
   const springConfig = { type: 'spring', bounce: 0, duration: 0.4 };
 
-  const handleLoadUrl = (e: React.FormEvent) => {
+  const handleLoadUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = urlInput.trim();
     if (!trimmed) return;
@@ -50,12 +54,15 @@ export default function Music() {
     const videoId = match ? match[1] : trimmed.length === 11 ? trimmed : null;
 
     if (videoId) {
+      // Fetch actual metadata from YouTube
+      const metadata = await fetchYouTubeMetadata(videoId);
+
       actions.playTrack({
         id: videoId,
-        title: `YouTube Stream (${videoId})`,
+        title: metadata?.title || `YouTube Stream (${videoId})`,
         videoId: videoId,
-        thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: 180 // Default fallback until loaded
+        thumbnailUrl: metadata?.thumbnailUrl || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        duration: 0 // Will be updated when player loads
       });
       setUrlInput('');
     } else {
@@ -86,10 +93,12 @@ export default function Music() {
               {sidebarOpen ? "Apple Music" : "AM"}
             </span>
           </div>
-          <motion.button 
+          <motion.button
             whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10"
           >
             <List size={18} weight="bold" />
           </motion.button>
@@ -103,11 +112,13 @@ export default function Music() {
               <motion.button
                 key={item.id}
                 whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
                 onClick={() => setActivePane(item.id as any)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors text-left',
-                  isActive 
-                    ? 'bg-primary/10 text-primary dark:bg-primary/20' 
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium',
+                  isActive
+                    ? 'bg-primary/10 text-primary dark:bg-primary/20'
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06]'
                 )}
               >
@@ -148,8 +159,10 @@ export default function Music() {
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
                   type="submit"
-                  className="px-5 py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl shadow-sm hover:opacity-95 transition-opacity"
+                  className="px-5 py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl shadow-sm"
                 >
                   Play
                 </motion.button>
@@ -202,105 +215,140 @@ export default function Music() {
       </main>
 
       {/* ── Sticky Bottom Player (Apple Translucent Chrome) ── */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-t border-zinc-200 dark:border-white/10 px-6 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          
-          {/* Track Preview Info */}
-          <div className="flex items-center gap-3 w-1/4 min-w-[200px]">
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-white/10">
+      <footer className="fixed bottom-6 left-[51%] -translate-x-[50%] z-50 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl px-4 py-2.5 rounded-full max-w-[90%] ring-1 ring-inset ring-white/30 dark:ring-zinc-900/20 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:ring-2 hover:ring-inset hover:ring-white/40 dark:hover:ring-zinc-900/30 border-[2px solid black] dark:border-[2px solid white] transition-colors">
+        <div className="flex items-center justify-between gap-4 w-full">
+
+          {/* Left Section: Track Metadata */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-white/10">
               {state.currentTrack?.thumbnailUrl ? (
                 <img src={state.currentTrack.thumbnailUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400"><MusicNotes size={20} /></div>
+                <div className="w-full h-full flex items-center justify-center text-zinc-400"><MusicNotes size={14} /></div>
               )}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold tracking-[-0.02em] text-zinc-900 dark:text-white truncate">
                 {state.currentTrack?.title || "Not Playing"}
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 tracking-[-0.02em] truncate">
-                {state.currentTrack ? "YouTube Audio Engine" : "Ready"}
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tracking-[-0.02em] truncate">
+                {state.currentTrack ? "YouTube Audio" : "Ready"}
               </p>
             </div>
           </div>
 
-          {/* Central Controls & Timeline */}
-          <div className="flex flex-col items-center gap-1.5 w-2/4 max-w-md">
-            <div className="flex items-center gap-6">
-              <motion.button 
-                whileTap={{ scale: 0.9 }}
-                onClick={actions.togglePlay}
-                disabled={!state.currentTrack}
-                className="w-10 h-10 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-md disabled:opacity-30 transition-transform"
-              >
-                {state.isPlaying ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" className="ml-0.5" />}
-              </motion.button>
-            </div>
+          {/* Center Section: Playback Controls */}
+          <div className="flex items-center gap-2">
+            {/* Shuffle */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={() => {/* Shuffle logic would go here */}}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+            >
+              <Shuffle size={18} weight="bold" />
+            </motion.button>
 
-            {/* Timeline Bar */}
-            <div className="w-full flex items-center gap-3">
-              <span className="text-[10px] tabular-nums text-zinc-400 tracking-[-0.02em]">
-                {formatTime(state.progress)}
-              </span>
-              <div 
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pos = (e.clientX - rect.left) / rect.width;
-                  actions.seekTo(pos * state.duration);
-                }}
-                className="flex-1 h-1.5 bg-zinc-200 dark:bg-white/20 rounded-full cursor-pointer relative overflow-hidden group"
-              >
-                <div 
-                  className="absolute top-0 left-0 bottom-0 bg-primary transition-all rounded-full"
-                  style={{ width: `${state.duration ? (state.progress / state.duration) * 100 : 0}%` }}
-                />
-              </div>
-              <span className="text-[10px] tabular-nums text-zinc-400 tracking-[-0.02em]">
-                {formatTime(state.duration)}
-              </span>
-            </div>
+            {/* Skip Back */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={actions.previousTrack}
+              disabled={!state.currentTrack}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+            >
+              <ArrowLeft size={18} weight="bold" />
+            </motion.button>
+
+            {/* Play/Pause */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={actions.togglePlay}
+              disabled={!state.currentTrack}
+              className="w-10 h-10 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-md disabled:opacity-30"
+            >
+              {state.isPlaying ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" className="ml-0.5" />}
+            </motion.button>
+
+            {/* Skip Forward */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={actions.nextTrack}
+              disabled={!state.currentTrack}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+            >
+              <ArrowRight size={18} weight="bold" />
+            </motion.button>
+
+            {/* Repeat */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={() => {/* Repeat logic would go here */}}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+            >
+              <ArrowsClockwise size={18} weight="bold" />
+            </motion.button>
           </div>
 
-          {/* Volume Slider */}
-          <div className="flex items-center justify-end gap-3 w-1/4 min-w-[160px]">
-            <button 
-              onClick={() => actions.setVolume(state.volume > 0 ? 0 : 0.75)}
-              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white transition-colors"
+          {/* Right Section: Utility & Volume */}
+          <div className="flex items-center gap-2">
+            {/* Lyrics */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={() => {/* Lyrics logic would go here */}}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
             >
-              {state.volume > 0 ? <SpeakerHigh size={18} weight="bold" /> : <SpeakerX size={18} weight="bold" />}
-            </button>
-            <input 
-              type="range" 
-              min="0" 
-              max="1" 
-              step="0.01"
-              value={state.volume}
-              onChange={(e) => actions.setVolume(parseFloat(e.target.value))}
-              className="w-24 accent-primary cursor-pointer"
-            />
+              <MusicNotes size={18} weight="bold" />
+            </motion.button>
+
+            {/* Queue */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={() => {/* Queue logic would go here */}}
+              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+            >
+              <List size={18} weight="bold" />
+            </motion.button>
+
+            {/* Volume */}
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                onClick={() => actions.setVolume(state.volume > 0 ? 0 : 0.75)}
+                className="text-zinc-500"
+              >
+                {state.volume > 0 ? <SpeakerHigh size={16} weight="bold" /> : <SpeakerX size={16} weight="bold" />}
+              </motion.button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={state.volume}
+                onChange={(e) => actions.setVolume(parseFloat(e.target.value))}
+                className="w-20 accent-primary cursor-pointer"
+              />
+            </div>
           </div>
 
         </div>
       </footer>
 
-      {/* Headless Player Instance */}
-      {state.currentTrack && (
-        <div className="hidden">
-          <YouTubePlayer 
-            videoId={state.currentTrack.videoId}
-            autoplay={state.isPlaying}
-            onReady={(e) => {
-              // Ensure duration syncs from real iframe
-            }}
-            onStateChange={(e) => {
-              // Map native iframe state changes smoothly
-              if (e.data === 1 && !state.isPlaying) actions.play();
-              if (e.data === 2 && state.isPlaying) actions.pause();
-            }}
-          />
-        </div>
-      )}
-
+      
     </div>
   );
 }
