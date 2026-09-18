@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Pixel Focus App
-Comment=Pixel — offline productivity OS for students
-Exec=pixel-focus-app
-Icon=pixel-focus-app
-Terminal=false
-Type=Application
-Categories=Office;Productivity;
-StartupWMClass=Pixel
