@@ -18,6 +18,8 @@ interface MusicPlayerState {
   volume: number; // 0 to 1
   isFullScreen: boolean;
   playerReady: boolean;
+  shuffle: boolean;
+  repeat: boolean;
 }
 
 interface MusicPlayerActions {
@@ -30,6 +32,8 @@ interface MusicPlayerActions {
   toggleFullScreen: () => void;
   nextTrack: () => void;
   previousTrack: () => void;
+  toggleShuffle: () => void;
+  toggleRepeat: () => void;
 }
 
 interface MusicPlayerContextProps {
@@ -45,7 +49,9 @@ const defaultState: MusicPlayerState = {
   duration: 0,
   volume: 0.5,
   isFullScreen: false,
-  playerReady: false
+  playerReady: false,
+  shuffle: false,
+  repeat: false
 };
 
 const defaultActions: MusicPlayerActions = {
@@ -57,7 +63,9 @@ const defaultActions: MusicPlayerActions = {
   setVolume: () => {},
   toggleFullScreen: () => {},
   nextTrack: () => {},
-  previousTrack: () => {}
+  previousTrack: () => {},
+  toggleShuffle: () => {},
+  toggleRepeat: () => {}
 };
 
 const MusicPlayerContext = createContext<MusicPlayerContextProps>({
@@ -207,6 +215,14 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
     setState(prev => ({ ...prev, isFullScreen: !prev.isFullScreen }));
   }, []);
 
+  const toggleShuffle = useCallback(() => {
+    setState(prev => ({ ...prev, shuffle: !prev.shuffle }));
+  }, []);
+
+  const toggleRepeat = useCallback(() => {
+    setState(prev => ({ ...prev, repeat: !prev.repeat }));
+  }, []);
+
   const nextTrack = useCallback(() => {
     // This would be implemented with a playlist/queue system
     console.log('Next track not implemented yet');
@@ -230,6 +246,8 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
     seekTo,
     setVolume,
     toggleFullScreen,
+    toggleShuffle,
+    toggleRepeat,
     nextTrack,
     previousTrack
   };
@@ -245,6 +263,7 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
             autoplay={state.isPlaying}
             onReady={handlePlayerReady}
             onStateChange={handlePlayerStateChange}
+            onPlayerRef={setPlayerRef}
           />
         )}
       </div>

@@ -5,6 +5,7 @@ interface YouTubePlayerProps {
   autoplay?: boolean;
   onReady?: (event: any) => void;
   onStateChange?: (event: any) => void;
+  onPlayerRef?: (player: YT.Player | null) => void;
 }
 
 /**
@@ -15,7 +16,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   videoId,
   autoplay = false,
   onReady,
-  onStateChange
+  onStateChange,
+  onPlayerRef
 }) => {
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         playerRef.current = null;
       }
     };
-  }, [videoId, autoplay, onReady, onStateChange]);
+  }, [videoId, onReady, onStateChange, onPlayerRef]); // Removed autoplay from deps
 
   const initializePlayer = () => {
     if (!playerContainerRef.current) return;
@@ -56,7 +58,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       width: '0',
       videoId,
       playerVars: {
-        autoplay: autoplay ? 1 : 0,
+        autoplay: autoplay ? 1 : 0, // Use the current autoplay value
         controls: 0,
         rel: 0,
         showinfo: 0,
@@ -68,6 +70,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       events: {
         onReady: (event) => {
           if (onReady) onReady(event);
+          // Notify parent of player instance
+          if (onPlayerRef) onPlayerRef(playerRef.current);
         },
         onStateChange: (event) => {
           if (onStateChange) onStateChange(event);

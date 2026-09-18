@@ -244,8 +244,11 @@ export default function Music() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              onClick={() => {/* Shuffle logic would go here */}}
-              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+              onClick={actions.toggleShuffle}
+              className={cn(
+                "text-zinc-500 hover:text-zinc-800 dark:hover:text-white",
+                state.shuffle && "text-primary"
+              )}
             >
               <Shuffle size={18} weight="bold" />
             </motion.button>
@@ -291,8 +294,11 @@ export default function Music() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              onClick={() => {/* Repeat logic would go here */}}
-              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+              onClick={actions.toggleRepeat}
+              className={cn(
+                "text-zinc-500 hover:text-zinc-800 dark:hover:text-white",
+                state.repeat && "text-primary"
+              )}
             >
               <ArrowsClockwise size={18} weight="bold" />
             </motion.button>
@@ -305,7 +311,10 @@ export default function Music() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              onClick={() => {/* Lyrics logic would go here */}}
+              onClick={() => {
+                console.log('Lyrics button clicked - feature coming soon');
+                // TODO: Implement lyrics functionality
+              }}
               className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
             >
               <MusicNotes size={18} weight="bold" />
@@ -316,7 +325,10 @@ export default function Music() {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              onClick={() => {/* Queue logic would go here */}}
+              onClick={() => {
+                console.log('Queue button clicked - feature coming soon');
+                // TODO: Implement queue functionality
+              }}
               className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
             >
               <List size={18} weight="bold" />
