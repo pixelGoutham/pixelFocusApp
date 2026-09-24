@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { useMusicPlayer } from '@/lib/MusicPlayerContext';
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useMusicPlayer } from "@/lib/MusicPlayerContext";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import {
   MusicNotes,
   CloudRain,
@@ -17,32 +17,35 @@ import {
   ArrowLeft,
   ArrowRight,
   Lyrics,
-  Shuffle
-} from '@phosphor-icons/react';
-import { fetchYouTubeMetadata } from '@/lib/youtube-utils';
+  Shuffle,
+} from "@phosphor-icons/react";
+import { fetchYouTubeMetadata } from "@/lib/youtube-utils";
 
 export const PLAYER_HEIGHT = 80;
 
 interface NavItem {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string; weight?: 'bold' | 'fill' }>;
+  icon: React.ComponentType<{ className?: string; weight?: "bold" | "fill" }>;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'listen-now', label: 'Listen Now', icon: MusicNotes },
-  { id: 'focus-env', label: 'Focus Environments', icon: CloudRain },
-  { id: 'library', label: 'Local Library', icon: FolderSimple }
+  { id: "listen-now", label: "Listen Now", icon: MusicNotes },
+  { id: "focus-env", label: "Focus Environments", icon: CloudRain },
+  { id: "library", label: "Local Library", icon: FolderSimple },
 ];
 
 export default function Music() {
   const { state, actions } = useMusicPlayer();
-  const [activePane, setActivePane] = useState<'listen-now' | 'focus-env' | 'library'>('listen-now');
-  const [urlInput, setUrlInput] = useState('');
+  const [activePane, setActivePane] = useState<
+    "listen-now" | "focus-env" | "library"
+  >("listen-now");
+  const [urlInput, setUrlInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showLyrics, setShowLyrics] = useState(false);
 
   // Spring animation config
-  const springConfig = { type: 'spring', bounce: 0, duration: 0.4 };
+  const springConfig = { type: "spring", bounce: 0, duration: 0.4 };
 
   const handleLoadUrl = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +53,9 @@ export default function Music() {
     if (!trimmed) return;
 
     // Simple videoId extraction
-    const match = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    const match = trimmed.match(
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
+    );
     const videoId = match ? match[1] : trimmed.length === 11 ? trimmed : null;
 
     if (videoId) {
@@ -61,27 +66,28 @@ export default function Music() {
         id: videoId,
         title: metadata?.title || `YouTube Stream (${videoId})`,
         videoId: videoId,
-        thumbnailUrl: metadata?.thumbnailUrl || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: 0 // Will be updated when player loads
+        thumbnailUrl:
+          metadata?.thumbnailUrl ||
+          `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        duration: 0, // Will be updated when player loads
       });
-      setUrlInput('');
+      setUrlInput("");
     } else {
-      alert('Please enter a valid YouTube URL or Video ID.');
+      alert("Please enter a valid YouTube URL or Video ID.");
     }
   };
 
   const formatTime = (secs: number) => {
-    if (isNaN(secs) || secs <= 0) return '0:00';
+    if (isNaN(secs) || secs <= 0) return "0:00";
     const mins = Math.floor(secs / 60);
     const remain = Math.floor(secs % 60);
-    return `${mins}:${remain.toString().padStart(2, '0')}`;
+    return `${mins}:${remain.toString().padStart(2, "0")}`;
   };
 
   return (
     <div className="flex h-[calc(100vh-theme(spacing.16))] w-full overflow-hidden bg-white dark:bg-zinc-950 font-sans antialiased text-zinc-900 dark:text-zinc-100">
-      
       {/* ── Sidebar ── */}
-      <motion.aside 
+      <motion.aside
         initial={{ width: 240 }}
         animate={{ width: sidebarOpen ? 240 : 72 }}
         transition={springConfig}
@@ -96,7 +102,7 @@ export default function Music() {
           <motion.button
             whileTap={{ scale: 0.92 }}
             whileHover={{ scale: 1.02 }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200 dark:hover:bg-white/10"
           >
@@ -113,17 +119,25 @@ export default function Music() {
                 key={item.id}
                 whileTap={{ scale: 0.97 }}
                 whileHover={{ scale: 1.02 }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                 onClick={() => setActivePane(item.id as any)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium',
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium",
                   isActive
-                    ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06]'
+                    ? "bg-primary/10 text-primary dark:bg-primary/20"
+                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06]",
                 )}
               >
-                <Icon size={20} weight={isActive ? 'fill' : 'bold'} className="flex-shrink-0" />
-                {sidebarOpen && <span className="truncate tracking-[-0.02em]">{item.label}</span>}
+                <Icon
+                  size={20}
+                  weight={isActive ? "fill" : "bold"}
+                  className="flex-shrink-0"
+                />
+                {sidebarOpen && (
+                  <span className="truncate tracking-[-0.02em]">
+                    {item.label}
+                  </span>
+                )}
               </motion.button>
             );
           })}
@@ -133,34 +147,44 @@ export default function Music() {
       {/* ── Main Content Area ── */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-32">
         <div className="max-w-4xl mx-auto w-full p-8 space-y-8">
-          
-          {activePane === 'listen-now' && (
+          {activePane === "listen-now" && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold tracking-[-0.02em]">Listen Now</h1>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 tracking-[-0.02em]">Stream distraction-free audio via YouTube headless engine.</p>
+                <h1 className="text-2xl font-bold tracking-[-0.02em]">
+                  Listen Now
+                </h1>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 tracking-[-0.02em]">
+                  Stream distraction-free audio via YouTube headless engine.
+                </p>
               </div>
 
               {/* URL Input Form */}
-              <form onSubmit={handleLoadUrl} className="flex items-center gap-3">
+              <form
+                onSubmit={handleLoadUrl}
+                className="flex items-center gap-3"
+              >
                 <div className="relative flex-1">
-                  <Link size={16} weight="bold" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                  <input 
-                    type="text" 
+                  <Link
+                    size={16}
+                    weight="bold"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
+                  />
+                  <input
+                    type="text"
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     placeholder="Paste YouTube URL (e.g., https://youtu.be/...)"
                     className={cn(
-                      'w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all outline-none',
-                      'bg-zinc-100 border border-zinc-200 text-zinc-900 focus:bg-white focus:border-zinc-400 shadow-sm',
-                      'dark:bg-white/[0.03] dark:border-white/[0.1] dark:text-white dark:focus:bg-white/[0.08] dark:focus:border-white/[0.3]'
+                      "w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all outline-none",
+                      "bg-zinc-100 border border-zinc-200 text-zinc-900 focus:bg-white focus:border-zinc-400 shadow-sm",
+                      "dark:bg-white/[0.03] dark:border-white/[0.1] dark:text-white dark:focus:bg-white/[0.08] dark:focus:border-white/[0.3]",
                     )}
                   />
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   whileHover={{ scale: 1.02 }}
-                  transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                  transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                   type="submit"
                   className="px-5 py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl shadow-sm"
                 >
@@ -172,15 +196,17 @@ export default function Music() {
               <div className="flex flex-col items-center justify-center pt-8">
                 <div className="w-64 h-64 sm:w-80 sm:h-80 aspect-square rounded-2xl shadow-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 relative group">
                   {state.currentTrack ? (
-                    <img 
-                      src={state.currentTrack.thumbnailUrl} 
+                    <img
+                      src={state.currentTrack.thumbnailUrl}
                       alt={state.currentTrack.title}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-400 dark:text-zinc-600 gap-2">
                       <MusicNotes size={48} weight="bold" />
-                      <span className="text-xs tracking-[-0.02em]">No media loaded</span>
+                      <span className="text-xs tracking-[-0.02em]">
+                        No media loaded
+                      </span>
                     </div>
                   )}
                 </div>
@@ -190,41 +216,82 @@ export default function Music() {
                     {state.currentTrack?.title || "Ready to Stream"}
                   </h2>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 tracking-[-0.02em]">
-                    {state.currentTrack ? "Headless YouTube Engine" : "Paste a URL above to initialize audio"}
+                    {state.currentTrack
+                      ? "Headless YouTube Engine"
+                      : "Paste a URL above to initialize audio"}
                   </p>
                 </div>
               </div>
+
+              {/* Lyrics Section */}
+              {showLyrics && state.currentTrack && (
+                <div className="mt-8 w-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold tracking-[-0.02em]">
+                      Lyrics
+                    </h3>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                      onClick={() => setShowLyrics(false)}
+                      className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+                    >
+                      <X size={18} weight="bold" />
+                    </motion.button>
+                  </div>
+                  <div className="bg-zinc-50 dark:bg-zinc-900/40 rounded-xl p-4 max-h-[300px] overflow-y-auto">
+                    <p className="text-sm text-zinc-800 dark:text-zinc-200 tracking-[-0.02em] leading-relaxed">
+                      Lyrics for "{state.currentTrack?.title}" will appear here
+                      when available.
+                      {/* This would be implemented with a lyrics API in the future */}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {activePane === 'focus-env' && (
+          {activePane === "focus-env" && (
             <div className="space-y-4">
-              <h1 className="text-2xl font-bold tracking-[-0.02em]">Focus Environments</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Ambient sound generator settings will appear here.</p>
+              <h1 className="text-2xl font-bold tracking-[-0.02em]">
+                Focus Environments
+              </h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Ambient sound generator settings will appear here.
+              </p>
             </div>
           )}
 
-          {activePane === 'library' && (
+          {activePane === "library" && (
             <div className="space-y-4">
-              <h1 className="text-2xl font-bold tracking-[-0.02em]">Local Library</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Saved offline tracks and downloads will appear here.</p>
+              <h1 className="text-2xl font-bold tracking-[-0.02em]">
+                Local Library
+              </h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Saved offline tracks and downloads will appear here.
+              </p>
             </div>
           )}
-
         </div>
       </main>
 
       {/* ── Sticky Bottom Player (Apple Translucent Chrome) ── */}
       <footer className="fixed bottom-6 left-[51%] -translate-x-[50%] z-50 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl px-4 py-2.5 rounded-full max-w-[90%] ring-1 ring-inset ring-white/30 dark:ring-zinc-900/20 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:ring-2 hover:ring-inset hover:ring-white/40 dark:hover:ring-zinc-900/30 border-[2px solid black] dark:border-[2px solid white] transition-colors">
         <div className="flex items-center justify-between gap-4 w-full">
-
           {/* Left Section: Track Metadata */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-white/10">
               {state.currentTrack?.thumbnailUrl ? (
-                <img src={state.currentTrack.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={state.currentTrack.thumbnailUrl}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400"><MusicNotes size={14} /></div>
+                <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                  <MusicNotes size={14} />
+                </div>
               )}
             </div>
             <div className="min-w-0">
@@ -243,11 +310,11 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={actions.toggleShuffle}
               className={cn(
                 "text-zinc-500 hover:text-zinc-800 dark:hover:text-white",
-                state.shuffle && "text-primary"
+                state.shuffle && "text-primary",
               )}
             >
               <Shuffle size={18} weight="bold" />
@@ -257,7 +324,7 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={actions.previousTrack}
               disabled={!state.currentTrack}
               className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
@@ -269,19 +336,23 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={actions.togglePlay}
               disabled={!state.currentTrack}
               className="w-10 h-10 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-md disabled:opacity-30"
             >
-              {state.isPlaying ? <Pause size={18} weight="fill" /> : <Play size={18} weight="fill" className="ml-0.5" />}
+              {state.isPlaying ? (
+                <Pause size={18} weight="fill" />
+              ) : (
+                <Play size={18} weight="fill" className="ml-0.5" />
+              )}
             </motion.button>
 
             {/* Skip Forward */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={actions.nextTrack}
               disabled={!state.currentTrack}
               className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
@@ -293,11 +364,11 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={actions.toggleRepeat}
               className={cn(
                 "text-zinc-500 hover:text-zinc-800 dark:hover:text-white",
-                state.repeat && "text-primary"
+                state.repeat && "text-primary",
               )}
             >
               <ArrowsClockwise size={18} weight="bold" />
@@ -310,12 +381,15 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={() => {
-                console.log('Lyrics button clicked - feature coming soon');
-                // TODO: Implement lyrics functionality
+                // Toggle lyrics display
+                setShowLyrics(!showLyrics);
               }}
-              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+              className={cn(
+                "text-zinc-500 hover:text-zinc-800 dark:hover:text-white",
+                showLyrics && "text-primary",
+              )}
             >
               <MusicNotes size={18} weight="bold" />
             </motion.button>
@@ -324,9 +398,9 @@ export default function Music() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
               onClick={() => {
-                console.log('Queue button clicked - feature coming soon');
+                console.log("Queue button clicked - feature coming soon");
                 // TODO: Implement queue functionality
               }}
               className="text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
@@ -339,11 +413,15 @@ export default function Music() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 whileHover={{ scale: 1.05 }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                 onClick={() => actions.setVolume(state.volume > 0 ? 0 : 0.75)}
                 className="text-zinc-500"
               >
-                {state.volume > 0 ? <SpeakerHigh size={16} weight="bold" /> : <SpeakerX size={16} weight="bold" />}
+                {state.volume > 0 ? (
+                  <SpeakerHigh size={16} weight="bold" />
+                ) : (
+                  <SpeakerX size={16} weight="bold" />
+                )}
               </motion.button>
               <input
                 type="range"
@@ -356,11 +434,8 @@ export default function Music() {
               />
             </div>
           </div>
-
         </div>
       </footer>
-
-      
     </div>
   );
 }

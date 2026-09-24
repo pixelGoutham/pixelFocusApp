@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 interface YouTubePlayerProps {
   videoId: string;
@@ -17,7 +17,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   autoplay = false,
   onReady,
   onStateChange,
-  onPlayerRef
+  onPlayerRef,
 }) => {
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -28,9 +28,9 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       initializePlayer();
     } else {
       // Load the YouTube IFrame API script
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
       if (firstScriptTag) {
         firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
       }
@@ -54,8 +54,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     if (!playerContainerRef.current) return;
 
     playerRef.current = new YT.Player(playerContainerRef.current, {
-      height: '0',
-      width: '0',
+      height: "0",
+      width: "0",
       videoId,
       playerVars: {
         autoplay: autoplay ? 1 : 0, // Use the current autoplay value
@@ -65,7 +65,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         modestbranding: 1,
         iv_load_policy: 3,
         enablejsapi: 1,
-        origin: window.location.origin
+        origin: window.location.origin,
       },
       events: {
         onReady: (event) => {
@@ -77,20 +77,35 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           if (onStateChange) onStateChange(event);
         },
         onError: (event) => {
-          console.error('YouTube player error:', event);
-        }
-      }
+          console.error("YouTube player error:", event);
+        },
+      },
     });
   };
 
   // Expose player methods for external control
-  // These can be accessed via ref if needed
-  // For now, we'll rely on the context to control playback
+  const playerMethods = useRef({
+    playVideo: () => playerRef.current?.playVideo(),
+    pauseVideo: () => playerRef.current?.pauseVideo(),
+    seekTo: (seconds: number) => playerRef.current?.seekTo(seconds, true),
+    setVolume: (volume: number) => playerRef.current?.setVolume(volume),
+    getCurrentTime: () => playerRef.current?.getCurrentTime(),
+    getDuration: () => playerRef.current?.getDuration(),
+    getVideoLoadedFraction: () => playerRef.current?.getVideoLoadedFraction(),
+    getPlayerState: () => playerRef.current?.getPlayerState(),
+  });
+
+  // Expose the playerMethods via ref if onPlayerRef is provided
+  useEffect(() => {
+    if (onPlayerRef) {
+      onPlayerRef(playerMethods.current);
+    }
+  }, [onPlayerRef]);
 
   return (
     <div
       ref={playerContainerRef}
-      style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+      style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
     />
   );
 };

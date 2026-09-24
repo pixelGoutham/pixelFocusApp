@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import YouTubePlayer from './YouTubePlayer';
-import { extractYouTubeId, fetchYouTubeMetadata } from './youtube-utils';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import YouTubePlayer from "./YouTubePlayer";
+import { extractYouTubeId, fetchYouTubeMetadata } from "./youtube-utils";
 
 interface Track {
   id: string;
@@ -51,7 +58,7 @@ const defaultState: MusicPlayerState = {
   isFullScreen: false,
   playerReady: false,
   shuffle: false,
-  repeat: false
+  repeat: false,
 };
 
 const defaultActions: MusicPlayerActions = {
@@ -65,19 +72,19 @@ const defaultActions: MusicPlayerActions = {
   nextTrack: () => {},
   previousTrack: () => {},
   toggleShuffle: () => {},
-  toggleRepeat: () => {}
+  toggleRepeat: () => {},
 };
 
 const MusicPlayerContext = createContext<MusicPlayerContextProps>({
   state: defaultState,
-  actions: defaultActions
+  actions: defaultActions,
 });
 
 // Custom hook to use the music player context
 export const useMusicPlayer = () => {
   const context = useContext(MusicPlayerContext);
   if (!context) {
-    throw new Error('useMusicPlayer must be used within a MusicPlayerProvider');
+    throw new Error("useMusicPlayer must be used within a MusicPlayerProvider");
   }
   return context;
 };
@@ -98,7 +105,7 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
       progressIntervalRef.current = setInterval(() => {
         if (playerRef.current) {
           const currentTime = playerRef.current.getCurrentTime();
-          setState(prev => ({ ...prev, progress: currentTime }));
+          setState((prev) => ({ ...prev, progress: currentTime }));
         }
       }, 1000);
     } else {
@@ -121,13 +128,13 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
 
     switch (event.data) {
       case YT.PlayerState.PLAYING:
-        setState(prev => ({ ...prev, isPlaying: true }));
+        setState((prev) => ({ ...prev, isPlaying: true }));
         break;
       case YT.PlayerState.PAUSED:
-        setState(prev => ({ ...prev, isPlaying: false }));
+        setState((prev) => ({ ...prev, isPlaying: false }));
         break;
       case YT.PlayerState.ENDED:
-        setState(prev => ({ ...prev, isPlaying: false, progress: 0 }));
+        setState((prev) => ({ ...prev, isPlaying: false, progress: 0 }));
         break;
       case YT.PlayerState.BUFFERING:
         // Could set a buffering state if needed
@@ -140,55 +147,68 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
     if (!event.target) return;
 
     const duration = event.target.getDuration();
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       playerReady: true,
-      duration
+      duration,
     }));
   }, []);
 
   // Actions
-  const playTrack = useCallback(async (track: Track) => {
-    // Extract videoId if not already present
-    const videoId = track.videoId || extractYouTubeId(track.id) || '';
+  const playTrack = useCallback(
+    async (track: Track) => {
+      // Extract videoId if not already present
+      const videoId = track.videoId || extractYouTubeId(track.id) || "";
 
-    if (!videoId) {
-      console.error('Invalid track: no videoId found');
-      return;
-    }
+      if (!videoId) {
+        console.error("Invalid track: no videoId found");
+        return;
+      }
 
-    // Fetch metadata if not provided
-    const thumbnailUrl = track.thumbnailUrl ||
-      (await fetchYouTubeMetadata(videoId))?.thumbnailUrl;
+      // Fetch metadata if not provided
+      let metadata = track.thumbnailUrl
+        ? { thumbnailUrl: track.thumbnailUrl }
+        : await fetchYouTubeMetadata(videoId);
 
-    const updatedTrack: Track = {
-      ...track,
-      videoId,
-      thumbnailUrl: thumbnailUrl || undefined
-    };
+      // If metadata fetch failed, use fallback values
+      if (!metadata) {
+        metadata = {
+          thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        };
+      }
 
-    setState({
-      currentTrack: updatedTrack,
-      isPlaying: true,
-      progress: 0,
-      duration: 0,
-      volume: state.volume,
-      isFullScreen: state.isFullScreen,
-      playerReady: false
-    });
-  }, [state.volume, state.isFullScreen]);
+      const updatedTrack: Track = {
+        ...track,
+        videoId,
+        thumbnailUrl: metadata.thumbnailUrl,
+      };
+
+      setState({
+        currentTrack: updatedTrack,
+        isPlaying: true,
+        progress: 0,
+        duration: 0,
+        volume: state.volume,
+        isFullScreen: state.isFullScreen,
+        playerReady: false,
+        shuffle: state.shuffle,
+        repeat: state.repeat,
+      });
+    },
+    [state.volume, state.isFullScreen],
+  );
 
   const play = useCallback(() => {
     if (playerRef.current && state.currentTrack) {
       playerRef.current.playVideo();
-      setState(prev => ({ ...prev, isPlaying: true }));
+      setState((prev) => ({ ...prev, isPlaying: true }));
     }
   }, [state.currentTrack]);
 
   const pause = useCallback(() => {
     if (playerRef.current) {
       playerRef.current.pauseVideo();
-      setState(prev => ({ ...prev, isPlaying: false }));
+      setState((prev) => ({ ...prev, isPlaying: false }));
     }
   }, []);
 
@@ -199,7 +219,7 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current) {
       playerRef.current.seekTo(seconds, true);
-      setState(prev => ({ ...prev, progress: seconds }));
+      setState((prev) => ({ ...prev, progress: seconds }));
     }
   }, []);
 
@@ -208,29 +228,29 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
     if (playerRef.current) {
       playerRef.current.setVolume(clampedVolume * 100);
     }
-    setState(prev => ({ ...prev, volume: clampedVolume }));
+    setState((prev) => ({ ...prev, volume: clampedVolume }));
   }, []);
 
   const toggleFullScreen = useCallback(() => {
-    setState(prev => ({ ...prev, isFullScreen: !prev.isFullScreen }));
+    setState((prev) => ({ ...prev, isFullScreen: !prev.isFullScreen }));
   }, []);
 
   const toggleShuffle = useCallback(() => {
-    setState(prev => ({ ...prev, shuffle: !prev.shuffle }));
+    setState((prev) => ({ ...prev, shuffle: !prev.shuffle }));
   }, []);
 
   const toggleRepeat = useCallback(() => {
-    setState(prev => ({ ...prev, repeat: !prev.repeat }));
+    setState((prev) => ({ ...prev, repeat: !prev.repeat }));
   }, []);
 
   const nextTrack = useCallback(() => {
     // This would be implemented with a playlist/queue system
-    console.log('Next track not implemented yet');
+    console.log("Next track not implemented yet");
   }, []);
 
   const previousTrack = useCallback(() => {
     // This would be implemented with a playlist/queue system
-    console.log('Previous track not implemented yet');
+    console.log("Previous track not implemented yet");
   }, []);
 
   // Set player ref
@@ -249,7 +269,7 @@ export const MusicPlayerProvider = ({ children }: MusicPlayerProviderProps) => {
     toggleShuffle,
     toggleRepeat,
     nextTrack,
-    previousTrack
+    previousTrack,
   };
 
   return (
