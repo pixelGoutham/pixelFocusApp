@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
@@ -199,50 +199,53 @@ export default function Tasks() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Task" : "Add Task"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Task Name</Label><Input value={form.task} onChange={e => setForm(f => ({ ...f, task: e.target.value }))} placeholder="e.g. Electrostatics revision" data-testid="input-task-name" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Subject</Label>
-                <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-dl" placeholder="Subject" />
-                <datalist id="subjects-dl">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50">
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit Task" : "Add Task"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Task Name</Label><Input value={form.task} onChange={e => setForm(f => ({ ...f, task: e.target.value }))} placeholder="e.g. Electrostatics revision" data-testid="input-task-name" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Subject</Label>
+                  <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-dl" placeholder="Subject" />
+                  <datalist id="subjects-dl">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+                </div>
+                <div>
+                  <Label>Priority</Label>
+                  <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as Task["priority"] }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Start</Label><Input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} /></div>
+                <div><Label>End</Label><Input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} /></div>
               </div>
               <div>
-                <Label>Priority</Label>
-                <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as Task["priority"] }))}>
+                <Label>Quadrant</Label>
+                <Select value={form.quadrant} onValueChange={v => setForm(f => ({ ...f, quadrant: v as Task["quadrant"] }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="urgent-important">Urgent + Important</SelectItem>
+                    <SelectItem value="not-urgent-important">Not Urgent + Important</SelectItem>
+                    <SelectItem value="urgent-not-important">Urgent + Not Important</SelectItem>
+                    <SelectItem value="neither">Neither</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              <Button className="w-full" onClick={handleSave} data-testid="button-save-task">{editing ? "Save Changes" : "Add Task"}</Button>
             </div>
-            <div><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Start</Label><Input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} /></div>
-              <div><Label>End</Label><Input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} /></div>
-            </div>
-            <div>
-              <Label>Quadrant</Label>
-              <Select value={form.quadrant} onValueChange={v => setForm(f => ({ ...f, quadrant: v as Task["quadrant"] }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="urgent-important">Urgent + Important</SelectItem>
-                  <SelectItem value="not-urgent-important">Not Urgent + Important</SelectItem>
-                  <SelectItem value="urgent-not-important">Urgent + Not Important</SelectItem>
-                  <SelectItem value="neither">Neither</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button className="w-full" onClick={handleSave} data-testid="button-save-task">{editing ? "Save Changes" : "Add Task"}</Button>
-          </div>
-        </DialogContent>
+          </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );
