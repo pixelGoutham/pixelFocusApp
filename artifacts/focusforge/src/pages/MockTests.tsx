@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { Plus, Trash2, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -137,26 +137,29 @@ export default function MockTests() {
 
       {/* Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Add Test Result</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Test Name</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Physics Unit Test 2" data-testid="input-test-name" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Subject</Label>
-                <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-mt" placeholder="Subject" />
-                <datalist id="subjects-mt">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 max-w-md w-full bg-background border border-border shadow-lg rounded-xl">
+            <DialogHeader><DialogTitle>Add Test Result</DialogTitle></DialogHeader>
+            <div className="space-y-4 p-1">
+              <div><Label>Test Name</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Physics Unit Test 2" data-testid="input-test-name" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Subject</Label>
+                  <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-mt" placeholder="Subject" />
+                  <datalist id="subjects-mt">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+                </div>
+                <div><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
               </div>
-              <div><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Score (%)</Label><Input type="number" min={0} max={100} value={form.score} onChange={e => setForm(f => ({ ...f, score: e.target.value }))} placeholder="0–100" data-testid="input-score" /></div>
+                <div><Label>Total Questions</Label><Input type="number" min={0} value={form.totalQuestions} onChange={e => setForm(f => ({ ...f, totalQuestions: e.target.value }))} placeholder="Optional" /></div>
+              </div>
+              <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="What went well? What to improve?" rows={3} /></div>
+              <Button className="w-full" onClick={handleAdd} data-testid="button-save-test">Save Test Result</Button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Score (%)</Label><Input type="number" min={0} max={100} value={form.score} onChange={e => setForm(f => ({ ...f, score: e.target.value }))} placeholder="0–100" data-testid="input-score" /></div>
-              <div><Label>Total Questions</Label><Input type="number" min={0} value={form.totalQuestions} onChange={e => setForm(f => ({ ...f, totalQuestions: e.target.value }))} placeholder="Optional" /></div>
-            </div>
-            <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="What went well? What to improve?" rows={3} /></div>
-            <Button className="w-full" onClick={handleAdd} data-testid="button-save-test">Save Test Result</Button>
-          </div>
-        </DialogContent>
+          </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );
