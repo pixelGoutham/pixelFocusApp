@@ -1,8 +1,8 @@
 {
   "name": "pixel-desktop",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "author": "Goutham Kumar A",
-  "description": "Pixel — offline productivity OS for students",
+  "description": "Pixel Focus - The Ultimate App to Lock In",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -17,8 +17,8 @@
   },
   "build": {
     "appId": "com.pixel.app",
-    "productName": "Pixel",
-    "copyright": "Copyright © 2024",
+    "productName": "Pixel Focus",
+    "copyright": "Copyright © 2026 Goutham Kumar A",
     "directories": {
       "output": "release"
     },
@@ -45,8 +45,7 @@
             "x64"
           ]
         }
-      ],
-      "signAndEditExecutable": false
+      ]
     },
     "mac": {
       "target": "dmg"

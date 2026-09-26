@@ -21,6 +21,7 @@ function initDiscordRPC() {
 
 function createWindow() {
   const win = new BrowserWindow({
+    icon: path.join(__dirname, 'build/logo_dark.ico'),
     width: 1440,
     height: 900,
     minWidth: 960,
@@ -32,7 +33,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
     },
-    title: 'Pixel',
+    title: 'Pixel Focus',
     show: false, // show only after content loads (no white flash)
   });
 
