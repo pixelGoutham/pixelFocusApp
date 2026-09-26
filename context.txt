@@ -228,3 +228,21 @@ For any questions regarding the architecture or specific modules, refer to the s
 - Updated context.txt to document latest project state.
 - Adjusted Layout.tsx for improved sidebar logo positioning.
 - Updated electron-web assets for desktop builds.
+
+**Date: 2026-09-26
+
+### Work Completed Today:
+- Fixed Add Task modal z-index issue causing solid black background and blocked mouse interactions
+- Updated UI components (Input, Textarea, Select) to replace yellow focus rings with Apple-compliant subtle focus states
+- Increased DialogOverlay z-index from z-50 to z-60 to ensure proper stacking above floating mini-player
+- Replaced focus-ring classes with Apple-style neutral focus states: focus-visible:outline-none focus-visible:bg-white focus-visible:border-zinc-400 with dark mode variants
+
+### Technical Details:
+- Fixed z-index conflict: DialogOverlay (z-60) now appears above floating mini-player (zIndex: 60)
+- Apple design compliance: Subtle neutral border/background focus states replace bright yellow rings
+- Light mode: White background with zinc-400 border
+- Dark mode: Semi-transparent white background ([0.08]) and border ([0.3]) with smooth transitions
+- All changes maintain functionality while improving visual design per Apple design skill guidelines
+- Verified no business logic, routing, or data storage changes were made
+- Confirmed zero new dependencies were introduced
+- Validated build success with only expected warnings
