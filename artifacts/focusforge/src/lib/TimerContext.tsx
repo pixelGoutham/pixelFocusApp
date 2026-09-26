@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import localforage from 'localforage';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────
 
 export type PomodoroPhase = 'work' | 'break' | 'longBreak';
 
@@ -41,7 +41,7 @@ export interface StopwatchState {
   elapsedAtStart: number;  // elapsed ms when the stopwatch last started
 }
 
-// ─── Defaults ────────────────────────────────────────────────────────────────
+// ─── Defaults ────────────────────────────────────────────────────────────
 
 const DEFAULT_POMODORO: PomodoroState = {
   phase: 'work',
@@ -71,7 +71,7 @@ const DEFAULT_STOPWATCH: StopwatchState = {
 const POMODORO_KEY = 'pixel_pomodoro_state';
 const STOPWATCH_KEY = 'pixel_stopwatch_state';
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+// ─── Context ──────────────────────────────────────────────────────────────
 
 interface TimerContextType {
   // Pomodoro
@@ -101,7 +101,7 @@ export const useTimer = () => {
   return ctx;
 };
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// ─── Provider ────────────────────────────────────────────────────────────
 
 export function TimerProvider({ children }: { children: React.ReactNode }) {
   const [pom, setPomRaw] = useState<PomodoroState>(DEFAULT_POMODORO);
@@ -115,7 +115,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const pomIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const swRafRef = useRef<number | null>(null);
 
-  // ── Persist helpers ────────────────────────────────────────────────────────
+  // ── Persist helpers ────────────────────────────────────────────────────
 
   const savePom = useCallback((state: PomodoroState) => {
     localforage.setItem(POMODORO_KEY, state).catch(() => {});
@@ -125,7 +125,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     localforage.setItem(STOPWATCH_KEY, state).catch(() => {});
   }, []);
 
-  // ── Load from localforage on mount ─────────────────────────────────────────
+  // ── Load from localforage on mount ────────────────────────────────────
 
   useEffect(() => {
     Promise.all([
@@ -161,7 +161,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // ── Pomodoro interval ──────────────────────────────────────────────────────
+  // ── Pomodoro interval ────────────────────────────────────────────────
 
   const tickPom = useCallback(() => {
     setPomRaw(prev => {
@@ -223,7 +223,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     };
   }, [pom.running, tickPom]);
 
-  // ── Stopwatch RAF ──────────────────────────────────────────────────────────
+  // ── Stopwatch RAF ────────────────────────────────────────────────────
 
   const tickSw = useCallback(() => {
     setSwRaw(prev => {
@@ -249,7 +249,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     };
   }, [sw.running, tickSw]);
 
-  // ── Visibility change — recalculate from wall clock when tab returns ───────
+  // ── Visibility change — recalculate from wall clock when tab returns ──
 
   useEffect(() => {
     const onVisible = () => {
@@ -273,7 +273,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
-  // ── Pomodoro actions ───────────────────────────────────────────────────────
+  // ── Pomodoro actions ────────────────────────────────────────────────
 
   const updatePom = useCallback((patch: Partial<PomodoroState>) => {
     setPomRaw(prev => {
@@ -331,7 +331,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     });
   }, [savePom]);
 
-  // ── Stopwatch actions ──────────────────────────────────────────────────────
+  // ── Stopwatch actions ────────────────────────────────────────────────
 
   const updateSw = useCallback((patch: Partial<StopwatchState>) => {
     setSwRaw(prev => {
@@ -382,7 +382,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     saveSw(next);
   }, [saveSw, sw.selectedSubject]);
 
-  // ── Phase-complete callback setter ─────────────────────────────────────────
+  // ── Phase-complete callback setter ────────────────────────────────────
 
   const setPomPhaseCompleteCallback = useCallback(
     (fn: ((newPom: PomodoroState) => void) | null) => {
@@ -390,6 +390,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     },
     []
   );
+
 
   return (
     <TimerContext.Provider value={{

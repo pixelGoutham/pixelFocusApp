@@ -17,5 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onLeaveFullscreen: (callback) => {
     ipcRenderer.on('did-leave-fullscreen', callback);
     return () => ipcRenderer.removeListener('did-leave-fullscreen', callback);
-  }
+  },
+  // Discord Rich Presence
+  setDiscordActivity: (activity) => ipcRenderer.send('set-discord-activity', activity),
+  clearDiscordActivity: () => ipcRenderer.send('clear-discord-activity'),
 });

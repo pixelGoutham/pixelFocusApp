@@ -1,5 +1,23 @@
 const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
+const DiscordRPC = require('discord-rpc');
+const clientId = '1553306840522039316';
+
+let rpc;
+let rpcReady = false;
+
+function initDiscordRPC() {
+  DiscordRPC.register(clientId);
+  rpc = new DiscordRPC.Client({ transport: 'ipc' });
+
+  rpc.on('ready', () => {
+    rpcReady = true;
+    console.log('Discord RPC Connected');
+  });
+
+  // Fails silently if Discord isn't open
+  rpc.login({ clientId }).catch(() => console.log('Discord not running'));
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -69,8 +87,27 @@ function setupFullscreenSync(win) {
   });
 }
 
+ipcMain.on('set-discord-activity', (event, activityData) => {
+  if (!rpcReady || !rpc) return;
+
+  rpc.setActivity({
+    details: activityData.details,
+    state: activityData.state,
+    startTimestamp: activityData.startTimestamp,
+    largeImageKey: 'logo_dark',
+    largeImageText: 'PixelFocus',
+    instance: false,
+  }).catch(console.error);
+});
+
+ipcMain.on('clear-discord-activity', () => {
+  if (!rpcReady || !rpc) return;
+  rpc.clearActivity().catch(console.error);
+});
+
 app.whenReady().then(() => {
   const win = createWindow();
+  initDiscordRPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       const win2 = createWindow();

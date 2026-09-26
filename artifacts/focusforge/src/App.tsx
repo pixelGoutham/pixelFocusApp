@@ -8,6 +8,7 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
 import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 import { TimerProvider } from "@/lib/TimerContext";
+import { DiscordPresence } from '@/components/DiscordPresence';
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { Layout } from "@/components/Layout";
 import { FullscreenProvider, useFullscreen } from "@/lib/FullscreenContext";
@@ -98,6 +99,7 @@ function AppInner() {
             <ThemeProvider>
               <TimerProvider>
                 <MusicPlayerProvider>
+                  <DiscordPresence />
                   {isElectron ? (
                     <WouterRouter hook={useHashLocation}>
                       <AppRouter />
