@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { format, parseISO } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { format, parseISO, addDays } from "date-fns";
 import { Plus, Trash2, Edit3, Flame, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,6 @@ const EMPTY_FORM = {
   endTime: "10:00",
   subject: "",
   task: "",
-  priority: "Medium" as Task["priority"],
   quadrant: "not-urgent-important" as Task["quadrant"],
 };
 
@@ -33,22 +32,41 @@ export default function Tasks() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [showStartTimeOptions, setShowStartTimeOptions] = useState(false);
+  const [showEndTimeOptions, setShowEndTimeOptions] = useState(false);
+
+  // Hide time options when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dialogOpen) {
+        // Check if click is outside time inputs
+        const target = e.target as HTMLElement;
+        if (!target.closest('input[type="time"]')) {
+          setShowStartTimeOptions(false);
+          setShowEndTimeOptions(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dialogOpen]);
 
   const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
 
   const filtered = useMemo(() => tasks.filter(t => {
     if (filterSubject !== "all" && t.subject !== filterSubject) return false;
-    if (filterPriority !== "all" && t.priority !== filterPriority) return false;
     if (filterStatus === "done" && !t.completed) return false;
     if (filterStatus === "pending" && t.completed) return false;
     if (search && !t.task.toLowerCase().includes(search.toLowerCase()) && !t.subject.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)), [tasks, filterSubject, filterPriority, filterStatus, search]);
+  }).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)), [tasks, filterSubject, filterStatus, search]);
 
   const openAdd = () => {
     setEditing(null);
@@ -58,7 +76,7 @@ export default function Tasks() {
 
   const openEdit = (task: Task) => {
     setEditing(task);
-    setForm({ date: task.date, startTime: task.startTime, endTime: task.endTime, subject: task.subject, task: task.task, priority: task.priority, quadrant: task.quadrant });
+    setForm({ date: task.date, startTime: task.startTime, endTime: task.endTime, subject: task.subject, task: task.task, quadrant: task.quadrant });
     setDialogOpen(true);
   };
 
@@ -78,8 +96,7 @@ export default function Tasks() {
   const toggleTask = (id: string) => setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   const deleteTask = (id: string) => { setTasks(prev => prev.filter(t => t.id !== id)); toast({ title: "Task deleted" }); };
 
-  const priorityColor = (p: Task["priority"]) => p === "High" ? "text-rose-400" : p === "Medium" ? "text-amber-400" : "text-emerald-400";
-
+  
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       {/* Toolbar */}
@@ -98,16 +115,7 @@ export default function Tasks() {
             {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="w-32" data-testid="filter-priority"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            <SelectItem value="High">High</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="Low">Low</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-32" data-testid="filter-status"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
@@ -168,14 +176,13 @@ export default function Tasks() {
                 )}
               >
                 <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} data-testid={`checkbox-${task.id}`} />
-                <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityColor(task.priority).replace("text-", "bg-"))} />
+                <div className="h-2 w-2 rounded-full flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-sm font-medium truncate", task.completed && "line-through")}>{task.task}</p>
                   <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}–{task.endTime}</p>
                 </div>
                 <Badge variant="outline" className={cn("text-xs border hidden sm:flex", getSubjectColor(task.subject))}>{task.subject}</Badge>
-                <span className={cn("text-xs font-medium hidden md:block", priorityColor(task.priority))}>{task.priority}</span>
-                {task.pomodoroSessions > 0 && (
+                                {task.pomodoroSessions > 0 && (
                   <span className="flex items-center gap-0.5 text-xs text-amber-400 hidden md:flex">
                     <Flame className="h-3 w-3" />{task.pomodoroSessions}
                   </span>
@@ -207,29 +214,147 @@ export default function Tasks() {
             </DialogHeader>
             <div className="space-y-4">
               <div><Label>Task Name</Label><Input value={form.task} onChange={e => setForm(f => ({ ...f, task: e.target.value }))} placeholder="e.g. Electrostatics revision" data-testid="input-task-name" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div>
                   <Label>Subject</Label>
                   <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-dl" placeholder="Subject" />
                   <datalist id="subjects-dl">{subjects.map(s => <option key={s} value={s} />)}</datalist>
                 </div>
+              <div className="space-y-4">
+      <div className="bg-white/[0.03] dark:bg-white/[0.05] rounded-lg p-4">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setForm(f => ({ ...f, date: format(new Date(), "yyyy-MM-dd") }))} className="px-3 py-2 text-sm font-medium rounded hover:bg-white/[0.05] dark:hover:bg-white/[0.1] transition-all duration-200">Today</button>
+          <button onClick={() => setForm(f => ({ ...f, date: format(addDays(new Date(), 1), "yyyy-MM-dd") }))} className="px-3 py-2 text-sm font-medium rounded hover:bg-white/[0.05] dark:hover:bg-white/[0.1] transition-all duration-200">Tomorrow</button>
+          <button onClick={() => {
+              const today = new Date();
+              const day = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+              const diff = (0 - day + 7) % 7; // Days until next Sunday
+              const nextSunday = addDays(today, diff);
+              setForm(f => ({ ...f, date: format(nextSunday, "yyyy-MM-dd") }));
+            }} className="px-3 py-2 text-sm font-medium rounded hover:bg-white/[0.05] dark:hover:bg-white/[0.1] transition-all duration-200">Sunday</button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-muted-foreground">Date</Label>
+        <Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="input-sm" />
+      </div>
+    </div>
+              <div className="space-y-8">
+              <div className="bg-white/[0.03] dark:bg-white/[0.05] rounded-lg p-5">
+                <Label className="text-sm font-medium text-muted-foreground mb-2">Start Time</Label>
                 <div>
-                  <Label>Priority</Label>
-                  <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as Task["priority"] }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    type="time"
+                    value={form.startTime}
+                    onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
+                    className="input-sm input-lg"
+                    onFocus={() => setShowStartTimeOptions(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowStartTimeOptions(true);
+                    }}
+                  />
                 </div>
+                {showStartTimeOptions && (
+                  <div className="mt-5">
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Times</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "09:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">9:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "10:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">10:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "11:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">11:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "12:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">12:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "13:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">13:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "14:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">14:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "15:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">15:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, startTime: "16:00" }));
+                          setShowStartTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">16:00</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div><Label>Date</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Start</Label><Input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} /></div>
-                <div><Label>End</Label><Input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} /></div>
+              <div className="h-px bg-white/[0.1] dark:bg-white/[0.2] my-8" />
+              <div className="bg-white/[0.03] dark:bg-white/[0.05] rounded-lg p-5">
+                <Label className="text-sm font-medium text-muted-foreground mb-2">End Time</Label>
+                <div>
+                  <Input
+                    type="time"
+                    value={form.endTime}
+                    onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
+                    className="input-sm input-lg"
+                    onFocus={() => setShowEndTimeOptions(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEndTimeOptions(true);
+                    }}
+                  />
+                </div>
+                {showEndTimeOptions && (
+                  <div className="mt-5">
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Times</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "09:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">9:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "10:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">10:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "11:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">11:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "12:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">12:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "13:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">13:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "14:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">14:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "15:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">15:00</button>
+                        <button onClick={() => {
+                          setForm(f => ({ ...f, endTime: "16:00" }));
+                          setShowEndTimeOptions(false);
+                        }} className="px-3 py-2 text-sm rounded hover:bg-white/[0.04] dark:hover:bg-white/[0.06] transition-all duration-200">16:00</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
               <div>
                 <Label>Quadrant</Label>
                 <Select value={form.quadrant} onValueChange={v => setForm(f => ({ ...f, quadrant: v as Task["quadrant"] }))}>

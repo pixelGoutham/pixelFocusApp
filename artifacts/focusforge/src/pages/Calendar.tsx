@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Plus, Upload, CalendarBlank, X, Check } from "@p
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -233,10 +233,12 @@ export default function Calendar() {
 
       {/* Add Task Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Task — {format(parseISO(selectedDate), "d MMMM yyyy")}</DialogTitle>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Task — {format(parseISO(selectedDate), "d MMMM yyyy")}</DialogTitle>
+            </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Date</Label>
@@ -280,17 +282,20 @@ export default function Calendar() {
             <Button className="w-full" onClick={handleSaveTask} data-testid="button-save-cal-task">Add to Calendar</Button>
           </div>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
 
       {/* CSV Preview Dialog */}
       <Dialog open={!!csvPreview} onOpenChange={() => setCsvPreview(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Upload weight="fill" className="h-4 w-4 text-muted-foreground" />
-              Import {csvPreview?.length} Tasks from CSV
-            </DialogTitle>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload weight="fill" className="h-4 w-4 text-muted-foreground" />
+                Import {csvPreview?.length} Tasks from CSV
+              </DialogTitle>
+            </DialogHeader>
           <div className="max-h-80 overflow-auto scrollbar-thin rounded border border-border">
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-card">
@@ -323,6 +328,7 @@ export default function Calendar() {
             </Button>
           </div>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );

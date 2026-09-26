@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { useStore } from "@/lib/StoreContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -383,24 +383,29 @@ export default function Settings() {
 
       {/* Clear confirm dialog */}
       <Dialog open={clearOpen} onOpenChange={setClearOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-rose-400 flex items-center gap-2"><AlertTriangle className="h-5 w-5" />Clear All Data?</DialogTitle>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50">
+            <DialogHeader>
+              <DialogTitle className="text-rose-400 flex items-center gap-2"><AlertTriangle className="h-5 w-5" />Clear All Data?</DialogTitle>
+            </DialogHeader>
           <p className="text-sm text-muted-foreground">This will permanently erase everything. Make sure you have a backup first.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setClearOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleClearAll} data-testid="button-confirm-clear">Yes, Delete Everything</Button>
           </DialogFooter>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
 
       {/* Sign-out confirm dialog */}
       <Dialog open={signOutOpen} onOpenChange={setSignOutOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><LogOut className="h-5 w-5" />Sign Out?</DialogTitle>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><LogOut className="h-5 w-5" />Sign Out?</DialogTitle>
+            </DialogHeader>
           <p className="text-sm text-muted-foreground">
             You'll continue in local-only mode. Your data stays on this device and in the cloud — nothing is deleted.
           </p>
@@ -409,6 +414,7 @@ export default function Settings() {
             <Button variant="destructive" onClick={async () => { await signOut(); setSignOutOpen(false); toast({ title: "Signed out" }); }}>Sign Out</Button>
           </DialogFooter>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );

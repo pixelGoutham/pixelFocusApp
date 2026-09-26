@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -131,10 +131,12 @@ export default function Matrix() {
       })}
 
       <Dialog open={!!addingTo} onOpenChange={() => setAddingTo(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Task to {QUADRANTS.find(q => q.key === addingTo)?.label}</DialogTitle>
-          </DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50">
+            <DialogHeader>
+              <DialogTitle>Add Task to {QUADRANTS.find(q => q.key === addingTo)?.label}</DialogTitle>
+            </DialogHeader>
           <div className="space-y-4">
             <div><Label>Task</Label><Input value={form.task} onChange={e => setForm(f => ({ ...f, task: e.target.value }))} placeholder="Task description" data-testid="input-matrix-task" /></div>
             <div>
@@ -162,6 +164,7 @@ export default function Matrix() {
             <Button className="w-full" onClick={handleAdd} data-testid="button-confirm-add">Add Task</Button>
           </div>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );

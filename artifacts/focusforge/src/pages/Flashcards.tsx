@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Layout, ArrowRight, ArrowLeft, RotateCounterclockwise, Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -227,8 +227,10 @@ export default function Flashcards() {
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Add Flashcard</DialogTitle></DialogHeader>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 max-w-md">
+            <DialogHeader><DialogTitle>Add Flashcard</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Front (Question)</Label><Textarea value={form.front} onChange={e => setForm(f => ({ ...f, front: e.target.value }))} placeholder="What is Coulomb's Law?" rows={3} data-testid="input-front" /></div>
             <div><Label>Back (Answer)</Label><Textarea value={form.back} onChange={e => setForm(f => ({ ...f, back: e.target.value }))} placeholder="F = kq₁q₂/r²" rows={3} data-testid="input-back" /></div>
@@ -240,6 +242,7 @@ export default function Flashcards() {
             <Button className="w-full" onClick={handleAdd} data-testid="button-save-card">Add Card</Button>
           </div>
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </div>
   );
