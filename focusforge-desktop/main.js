@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -43,12 +43,38 @@ function createWindow() {
     }
     return { action: 'allow' };
   });
+
+  // Setup fullscreen state synchronization
+  setupFullscreenSync(win);
+
+  return win;
+}
+
+// Handle fullscreen toggling via IPC from renderer
+ipcMain.handle('toggle-fullscreen', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.setFullScreen(!win.isFullScreen());
+  }
+});
+
+// Sync fullscreen state from Electron to renderer
+function setupFullscreenSync(win) {
+  win.on('enter-full-screen', () => {
+    win.webContents.send('did-enter-fullscreen');
+  });
+
+  win.on('leave-full-screen', () => {
+    win.webContents.send('did-leave-fullscreen');
+  });
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const win = createWindow();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      const win2 = createWindow();
+    }
   });
 });
 

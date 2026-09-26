@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useLocation, Link } from 'wouter';
-import { 
-  LayoutDashboard, CalendarDays, CheckSquare, Grid2x2, 
+import {
+  LayoutDashboard, CalendarDays, CheckSquare, Grid2x2,
   Timer, Clock, BarChart3, BookOpen, ClipboardList, Settings, Zap,
   Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon, Menu,
 } from 'lucide-react';
@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { getSyncStatus } from '@/lib/cloudSync';
 import { useTheme } from '@/lib/ThemeContext';
+import { useFullscreen } from '@/lib/FullscreenContext';
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -97,12 +98,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [miniDismissed, setMiniDismissed] = useState(false);
   const [miniCollapsed, setMiniCollapsed] = useState(false);
+  const { isFullscreen, toggleFullscreen, isTransitioning: contextIsTransitioning } = useFullscreen();
+
+  // Track fullscreen state for transitions
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
+
+  // Handle fullscreen transitions with animation
+  useLayoutEffect(() => {
+    setIsTransitioning(true);
+
+    // Simulate transition progress for animation
+    const progress = isFullscreen ? 1 : 0;
+    setTransitionProgress(progress);
+
+    // Reset transition flag after animation completes
+    const timer = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 500); // Match animation duration
+
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
   const { embedUrl, title, thumb, clearYt } = useMusicContext();
   const { resolvedTheme, setTheme } = useTheme();
 
   const isOnMusic = location === '/music' || location.startsWith('/music');
   const sidebarCollapsed = isMobile ? false : isCollapsed;
-  const sidebarW  = isMobile ? 0 : (isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED);
+  // Sidebar width: on mobile, use drawer (handled via x transform); on desktop, follow collapsed/expanded state
+  const sidebarW = isMobile ? 0 : (isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED);
 
   const activeItem = [...NAV_ITEMS, { href: '/settings', label: 'Settings', icon: Settings }].find(item =>
     item.href === '/' ? location === '/' : location.startsWith(item.href)
@@ -148,11 +171,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ? { x: isMobileOpen ? 0 : -SIDEBAR_EXPANDED, width: SIDEBAR_EXPANDED }
             : { x: 0, width: sidebarW }
         }
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{
+          x: { duration: 0.3, ease: 'easeInOut' },
+          width: { type: 'spring', damping: 1.0, duration: 0.4 }
+        }}
         className={cn(
           'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar/90 backdrop-blur-lg',
           isMobile && 'fixed inset-y-0 left-0'
         )}
+        // Prevent focus traps when sidebar is hidden
+        aria-hidden={sidebarW === 0 ? 'true' : undefined}
+        style={{
+          pointerEvents: sidebarW === 0 ? 'none' : 'auto',
+          // Apply the width animation via Framer Motion
+          width: sidebarW
+        }}
       >
         {/* Logo */}
         <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
@@ -342,8 +375,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto relative flex flex-col bg-background">
-          <div className={cn('flex-1', !isOnMusic && 'p-6')}>
+        <motion.main
+          className="flex-1 overflow-auto relative flex flex-col bg-background"
+          initial={false}
+          animate={{
+            borderRadius: isFullscreen ? "0px" : "16px",
+            scale: isFullscreen ? 1 : 0.98,
+            boxShadow: isFullscreen
+              ? "0 0 0 rgba(0,0,0,0)"
+              : "0 4px 24px rgba(0,0,0,0.3)"
+          }}
+          transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+        >
+          <div className={cn('flex-1', !isOnMusic && !isFullscreen && 'p-6')}>
             {children}
           </div>
           <footer className="flex-shrink-0 border-t border-border py-2 px-6 flex items-center justify-center">
@@ -351,8 +395,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
               made with ❤️ by <span className="text-primary font-medium">Pixel for bot</span>
             </p>
           </footer>
-        </main>
+          {/* Liquid glass overlay */}
+          <AnimatePresence>
+            {contextIsTransitioning && (
+              <motion.div
+                initial={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
+                animate={{ opacity: 1, backdropFilter: "blur(32px)", backgroundColor: "rgba(0,0,0,0.3)" }}
+                exit={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 z-50 pointer-events-none bg-black/5 dark:bg-white/5"
+              />
+            )}
+          </AnimatePresence>
+        </motion.main>
       </div>
+
+      {/* ── Fullscreen Transition Overlay ────────────────────────────────────────
+           Liquid glass transition for entering/exiting fullscreen mode
+      ──────────────────────────────────────────────────────────────────────── */}
+      {isTransitioning && (
+        <motion.div
+          initial={{ opacity: 0, blur: 0 }}
+          animate={{ opacity: 0.3, blur: 20 }}
+          exit={{ opacity: 0, blur: 0 }}
+          transition={{
+            opacity: { type: 'spring', damping: 1.0, duration: 0.4 },
+            blur: { type: 'spring', damping: 1.0, duration: 0.4 }
+          }}
+          className="fixed inset-0 z-50 pointer-events-none backdrop-blur-lg bg-black/10"
+        />
+      )}
 
       {/* ── Persistent YouTube iframe ─────────────────────────────────────────
            Always mounted when embedUrl is set so audio never stops.

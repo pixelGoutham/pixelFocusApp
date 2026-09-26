@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 import { TimerProvider } from "@/lib/TimerContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { Layout } from "@/components/Layout";
+import { FullscreenProvider, useFullscreen } from "@/lib/FullscreenContext";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Calendar from "@/pages/Calendar";
@@ -67,32 +69,60 @@ function AppRouter() {
 
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 
-function App() {
+function AppInner() {
+  const { toggleFullscreen, isFullscreen } = useFullscreen();
+
+  // Global keyboard listener for F11 and Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'Escape' && isFullscreen) {
+        // Only handle Escape if we're in fullscreen (to avoid interfering with modals, etc.)
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [toggleFullscreen, isFullscreen]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
           <StoreProvider>
             <ThemeProvider>
-            <TimerProvider>
-              <MusicPlayerProvider>
-                {isElectron ? (
-                  <WouterRouter hook={useHashLocation}>
-                    <AppRouter />
-                  </WouterRouter>
-                ) : (
-                  <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                    <AppRouter />
-                  </WouterRouter>
-                )}
-              </MusicPlayerProvider>
-            </TimerProvider>
+              <TimerProvider>
+                <MusicPlayerProvider>
+                  {isElectron ? (
+                    <WouterRouter hook={useHashLocation}>
+                      <AppRouter />
+                    </WouterRouter>
+                  ) : (
+                    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                      <AppRouter />
+                    </WouterRouter>
+                  )}
+                </MusicPlayerProvider>
+              </TimerProvider>
             </ThemeProvider>
           </StoreProvider>
         </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
+  );
+}
+
+function App() {
+  return (
+    <FullscreenProvider>
+      <AppInner />
+    </FullscreenProvider>
   );
 }
 
