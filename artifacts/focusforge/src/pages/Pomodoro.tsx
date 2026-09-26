@@ -1,3 +1,4 @@
+import { VolumeX } from 'lucide-react';
 import { useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { Play, Pause, SkipForward, ArrowCounterClockwise, Faders, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";

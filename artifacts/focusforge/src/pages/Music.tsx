@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useMusicPlayer } from "@/lib/MusicPlayerContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+
 import {
   MusicNotes,
   CloudRain,
