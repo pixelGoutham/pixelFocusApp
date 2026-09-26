@@ -26,9 +26,6 @@ export function FullscreenProvider({ children }: { children: React.ReactNode }) 
     // Start transition immediately
     setIsTransitioning(true);
 
-    // Wait 150ms for the blur to fully cover the screen BEFORE snapping the OS window
-    await new Promise(resolve => setTimeout(resolve, 150));
-
     if (isElectron && (window as any).electronAPI?.toggleFullscreen) {
       // Use Electron IPC
       await (window as any).electronAPI.toggleFullscreen();
@@ -42,15 +39,15 @@ export function FullscreenProvider({ children }: { children: React.ReactNode }) 
     }
 
     // Clear the transition state after the window has safely resized and settled
-    setTimeout(() => setIsTransitioning(false), 700);
+    setTimeout(() => setIsTransitioning(false), 300);
   }, [isElectron]);
 
   // Sync with Electron fullscreen state changes
   useEffect(() => {
     if (!isElectron || !((window as any).electronAPI)) return;
 
-    const handleEnterFullscreen = () => setIsFullscreen(true);
-    const handleLeaveFullscreen = () => setIsFullscreen(false);
+    const handleEnterFullscreen = () => setIsFullscreen(prev => prev === true ? prev : true);
+    const handleLeaveFullscreen = () => setIsFullscreen(prev => prev === false ? prev : false);
 
     const unsubscribeEnter = ((window as any).electronAPI.onEnterFullscreen(handleEnterFullscreen));
     const unsubscribeLeave = ((window as any).electronAPI.onLeaveFullscreen(handleLeaveFullscreen));

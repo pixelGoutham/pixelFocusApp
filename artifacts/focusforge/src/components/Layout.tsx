@@ -100,26 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [miniCollapsed, setMiniCollapsed] = useState(false);
   const { isFullscreen, toggleFullscreen, isTransitioning: contextIsTransitioning } = useFullscreen();
 
-  // Track fullscreen state for transitions
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionProgress, setTransitionProgress] = useState(0);
-
-  // Handle fullscreen transitions with animation
-  useLayoutEffect(() => {
-    setIsTransitioning(true);
-
-    // Simulate transition progress for animation
-    const progress = isFullscreen ? 1 : 0;
-    setTransitionProgress(progress);
-
-    // Reset transition flag after animation completes
-    const timer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 500); // Match animation duration
-
-    return () => clearTimeout(timer);
-  }, [isFullscreen]);
-  const { embedUrl, title, thumb, clearYt } = useMusicContext();
+    const { embedUrl, title, thumb, clearYt } = useMusicContext();
   const { resolvedTheme, setTheme } = useTheme();
 
   const isOnMusic = location === '/music' || location.startsWith('/music');
@@ -169,20 +150,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         animate={
           isMobile
             ? { x: isMobileOpen ? 0 : -SIDEBAR_EXPANDED, width: SIDEBAR_EXPANDED }
-            : { x: 0, width: sidebarW }
+            : { width: isFullscreen ? 0 : sidebarW, opacity: isFullscreen ? 0 : 1, x: isFullscreen ? -30 : 0 }
         }
-        transition={{
-          x: { duration: 0.3, ease: 'easeInOut' },
-          width: { type: 'spring', damping: 1.0, duration: 0.4 }
-        }}
+        transition={{ type: "spring", bounce: 0, duration: 0.35 }}
         className={cn(
-          'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar/90 backdrop-blur-lg',
+          'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar/90 backdrop-blur-lg overflow-hidden',
           isMobile && 'fixed inset-y-0 left-0'
         )}
         // Prevent focus traps when sidebar is hidden
-        aria-hidden={sidebarW === 0 ? 'true' : undefined}
+        aria-hidden={sidebarW === 0 || isFullscreen ? 'true' : undefined}
         style={{
-          pointerEvents: sidebarW === 0 ? 'none' : 'auto',
+          pointerEvents: (sidebarW === 0 || isFullscreen) ? 'none' : 'auto',
           // Apply the width animation via Framer Motion
           width: sidebarW
         }}
@@ -376,16 +354,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <motion.main
-          className="flex-1 overflow-auto relative flex flex-col bg-background"
+          className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col w-full h-full bg-background [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           initial={false}
           animate={{
             borderRadius: isFullscreen ? "0px" : "16px",
-            scale: isFullscreen ? 1 : 0.98,
-            boxShadow: isFullscreen
-              ? "0 0 0 rgba(0,0,0,0)"
-              : "0 4px 24px rgba(0,0,0,0.3)"
+            scale: isFullscreen ? 1 : 0.98
           }}
-          transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+          transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+          style={{ transformOrigin: "center center" }}
         >
           <div className={cn('flex-1', !isOnMusic && !isFullscreen && 'p-6')}>
             {children}
@@ -399,33 +375,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <AnimatePresence>
             {contextIsTransitioning && (
               <motion.div
+                className="absolute inset-0 z-50 pointer-events-none"
                 initial={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
-                animate={{ opacity: 1, backdropFilter: "blur(32px)", backgroundColor: "rgba(0,0,0,0.3)" }}
-                exit={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgba(0,0,0,0)" }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 z-50 pointer-events-none bg-black/5 dark:bg-white/5"
+                animate={{ opacity: 1, backdropFilter: "blur(12px)", backgroundColor: "rgba(0,0,0,0.05)" }}
+                exit={{
+                  opacity: 0,
+                  backdropFilter: "blur(0px)",
+                  backgroundColor: "rgba(0,0,0,0)",
+                  transition: { duration: 0.2, ease: "easeOut" }
+                }}
+                transition={{ duration: 0, ease: "linear" }}
               />
             )}
           </AnimatePresence>
         </motion.main>
       </div>
 
-      {/* ── Fullscreen Transition Overlay ────────────────────────────────────────
-           Liquid glass transition for entering/exiting fullscreen mode
-      ──────────────────────────────────────────────────────────────────────── */}
-      {isTransitioning && (
-        <motion.div
-          initial={{ opacity: 0, blur: 0 }}
-          animate={{ opacity: 0.3, blur: 20 }}
-          exit={{ opacity: 0, blur: 0 }}
-          transition={{
-            opacity: { type: 'spring', damping: 1.0, duration: 0.4 },
-            blur: { type: 'spring', damping: 1.0, duration: 0.4 }
-          }}
-          className="fixed inset-0 z-50 pointer-events-none backdrop-blur-lg bg-black/10"
-        />
-      )}
-
+      
       {/* ── Persistent YouTube iframe ─────────────────────────────────────────
            Always mounted when embedUrl is set so audio never stops.
            On /music → large panel overlaying the player-spacer area.
