@@ -1,5 +1,5 @@
 # PixelFocusApp Project Summary
-meow
+meow T_T
 ## Overview
 PixelFocusApp is a productivity and focus application designed for students. It provides a suite of tools to help with studying, time management, and organization. The application is available as a web app and can be packaged as a standalone desktop application for Windows, macOS, and Linux using Electron.
 
