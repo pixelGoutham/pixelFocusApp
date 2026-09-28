@@ -40,12 +40,21 @@
       "icon": "./build/logo_dark.ico",
       "target": [
         {
+          "target": "appx",
+          "arch": ["x64", "arm64"]
+        },
+        {
           "target": "zip",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ]
+    },
+    "appx": {
+      "applicationId": "PixelFocus", 
+      "identityName": "PixelInc.PixelFocus",
+      "publisher": "CN=38A30AA3-1F11-405F-8B95-4AE3C413E3A4",
+      "publisherDisplayName": "Pixel_Inc",
+      "backgroundColor": "transparent"
     },
     "mac": {
       "target": "dmg"

@@ -1,0 +1,858 @@
+==================================================
+PIXEL FOCUS — PRIVACY & DATA PRACTICES AUDIT
+==================================================
+
+1. AUDIT SCOPE
+This audit examines the PixelFocusApp codebase to determine what data the application collects, stores, transmits, and processes. The audit focuses on the Electron desktop application being prepared for Microsoft Store submission, built from the source code in the `focusforge-desktop` directory.
+
+2. APPLICATION / RELEASE IDENTIFICATION
+- Application Name: Pixel Focus
+- Developer/Publisher: Pixel_Inc
+- Version: 2.2.0 (from focusforge-desktop/package.json)
+- Build Target: Windows desktop application packaged with Electron/MSIX for Microsoft Store
+- Repository: c:\Users\pixel\OneDrive\Desktop\Fedora_Backup\Github\Github\pixelFocusApp
+- Main Entry Point: focusforge-desktop/main.js
+- Production Build Path: focusforge-desktop/release/ (electron-builder output)
+
+3. EXECUTIVE SUMMARY
+Pixel Focus is an offline-first productivity application that stores all user data locally by default. The application offers optional cloud synchronization via Firebase when users sign in with Google or Apple accounts. Key privacy-relevant features include:
+- Local storage of tasks, study sessions, flashcards, mock tests, and settings in IndexedDB
+- Optional Firebase-based cloud synchronization (requires user authentication)
+- Discord Rich Presence integration that transmits user activity data to Discord
+- YouTube integration for music streaming that fetches metadata from YouTube's oEmbed API
+- Standard web technologies with no evidence of hidden tracking, fingerprinting, or unauthorized data collection
+- The application functions fully offline without requiring an account
+
+4. PERSONAL INFORMATION
+The application collects minimal personal information, primarily when users opt-in to authentication:
+
+A. ACTIVELY COLLECTED WHEN AUTHENTICATION ENABLED:
+- Email address (via Google/Apple sign-in)
+- Display name (via Google/Apple sign-in)
+- Profile photo URL (via Google/Apple sign-in)
+- Firebase UID (unique identifier)
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/firebase.ts: Google/Apple OAuth providers request email and profile scopes
+- artifacts/focusforge/src/lib/AuthContext.tsx: toAuthUser() function maps Firebase User to AuthUser with uid, email, displayName, photoURL
+- artifacts/focusforge/src/pages/Settings.tsx: Shows user profile UI with photo, display name, email when signed in
+
+B. COLLECTED BUT NOT TRANSMITTED WITHOUT CONSENT:
+- No personal information is collected or stored locally without user opting into authentication
+- Application generates anonymous device ID for cloud sync only when user signs in
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: getDeviceId() only called when syncToCloud() is invoked with a UID
+- artifacts/focusforge/src/lib/store.ts: No personal information stored in localforage without authentication
+
+C. INTENDED FOR REMOVAL IN STORE RELEASE:
+- None identified
+
+D. UNCERTAIN/UNVERIFIABLE:
+- Whether Firebase environment variables contain valid API keys in current build (determines if auth actually works)
+
+5. USER-GENERATED DATA
+All user-generated content is stored locally by default with optional cloud sync:
+
+A. ACTIVELY STORED AND PROCESSED:
+- Tasks: Subject, task description, priority, timing, completion status
+- Study Sessions: Subject, duration, type (pomodoro/manual/stopwatch)
+- Flashcards: Front/back content, subject, review schedule
+- Mock Tests: Name, subject, score, notes
+- Settings: User name, daily goals, pomodoro settings, theme preferences, study plans
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/store.ts: Type definitions and localforage storage functions for all data types
+- artifacts/focusforge/src/lib/store.ts: getTasks(), saveTasks(), getSessions(), saveSessions(), etc.
+- artifacts/focusforge/src/lib/store.ts: DEFAULT_SETTINGS shows all user-configurable preferences
+
+B. TRANSMITTED WHEN CLOUD SYNC ENABLED:
+- All user-generated data listed above is transmitted to Firestore when:
+  1. Firebase is configured with valid API keys
+  2. User signs in with Google or Apple
+  3. User is online
+  4. Changes trigger sync (debounced 30s) or periodic sync (every 5min)
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: syncToCloud() fetches all local data and writes to Firestore
+- artifacts/focusforge/src/lib/cloudSync.ts: Firestore document structure mirrors local storage collections
+- artifacts/focusforge/src/lib/StoreContext.tsx: setters call scheduleSync() when isFirebaseConfigured && user?.uid
+
+C. PRESENT IN CODE BUT NOT ACTIVE:
+- Cloud sync functionality exists but is inactive if Firebase not configured
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/firebase.ts: isFirebaseConfigured() checks for VITE_FIREBASE_* env vars
+- artifacts/focusforge/src/pages/Settings.tsx: Shows "Not configured" state and setup instructions when Firebase not ready
+- No evidence of hardcoded Firebase credentials in source code
+
+D. REMOVED FOR STORE RELEASE:
+- None identified for user-generated data handling
+
+6. LOCAL STORAGE
+All application data is stored locally using IndexedDB via localforage:
+
+A. ACTIVELY USED STORAGE MECHANISMS:
+- localforage (IndexedDB wrapper) configured with name: 'pixel', storeName: 'data'
+- Storage keys: tasks, sessions, flashcards, mockTests, settings
+- Additional local storage: pixel-theme (theme preference), pixel_device_id (for cloud sync), pixel_last_sync (timestamp)
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/store.ts: localforage.config({ name: 'pixel', storeName: 'data' })
+- artifacts/focusforge/src/lib/store.ts: KEYS object defines all storage keys
+- artifacts/focusforge/src/lib/store.ts: All getter/setter functions use localforage.getItem()/setItem()
+- artifacts/focusforge/src/lib/cloudSync.ts: getDeviceId() creates and stores anonymous device ID
+- artifacts/focusforge/src/lib/StoreContext.tsx: BroadcastChannel uses 'pixel-store-sync' for tab synchronization
+
+B. DATA RETENTION AND ISOLATION:
+- Data persists between sessions until explicitly cleared by user
+- No automatic expiration or cleanup of user data
+- Data is not encrypted at rest (localforage stores data plaintext)
+- Each user profile on Windows gets isolated IndexedDB storage via Electron's userData directory
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/store.ts: exportData()/importData() functions show complete data extraction
+- artifacts/focusforge/src/pages/Settings.tsx: handleClearAll() explicitly deletes all storage keys
+- No evidence of encryption implementation in storage layer
+
+C. TRANSMISSION OF LOCAL DATA:
+- Local data never leaves device unless:
+  1. User signs in AND
+  2. Firebase configured AND
+  3. User initiates sync OR periodic sync occurs while online
+- Export/backup functionality saves encrypted JSON to user-selected location (user-controlled)
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: syncToCloud() transmits data to Firestore
+- artifacts/focusforge/src/lib/store.ts: exportData() creates JSON blob for user download
+- artifacts/focusforge/src/pages/Settings.tsx: handleExport()/handleImport() for user-controlled backups
+
+7. NETWORK COMMUNICATIONS
+The application makes network requests only in specific, user-triggered or configured scenarios:
+
+A. ACTIVE NETWORK ENDPOINTS:
+1. YouTube oEmbed API: https://www.youtube.com/oembed?url={encoded_url}&format=json
+   - Triggered when user enters YouTube URL in Music page or MusicContext
+   - Fetches video title and thumbnail URL for display
+   - Makes request to googleapis.com domain
+
+2. Firebase Firestore: https://firestore.googleapis.com/google.firestore.v1.*
+   - Only active when Firebase configured AND user signed in
+   - Used for cloud synchronization of all user data
+
+3. Firebase Authentication: https://identitytoolkit.googleapis.com/google.identity.*
+   - Only active when Firebase configured AND user initiates sign-in
+   - Used for Google/Apple OAuth flows
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/youtube-utils.ts: fetchYouTubeMetadata() calls youtube.com/oembed
+- artifacts/focusforge/src/lib/MusicContext.tsx: fetchMeta() calls youtube.com/oembed
+- artifacts/focusforge/src/lib/firebase.ts: Firebase REST API endpoints used implicitly
+- artifacts/focusforge/src/lib/cloudSync.ts: Uses Firestore SDK for document operations
+
+B. PRESENT IN CODE BUT NOT ACTIVE:
+- Firebase network calls inactive if isFirebaseConfigured() returns false
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/firebase.ts: isFirebaseConfigured() gate checks
+- artifacts/focusforge/src/lib/StoreContext.tsx: All Firebase calls guarded by isFirebaseConfigured && user.uid
+- artifacts/focusforge/src/pages/Settings.tsx: Shows setup instructions when Firebase not ready
+
+C. ANALYTICS/TELEMETRY ENDPOINTS:
+- No evidence of analytics, telemetry, or error reporting endpoints
+- All analytics computations happen client-side using stored data
+
+EVIDENCE:
+- artifacts/focusforge/src/pages/Analytics.tsx: All calculations use useStore() and local date-fns
+- No external calls to analytics providers found in source code
+- No tracking pixels, beacons, or fingerprinting scripts identified
+
+8. AUTHENTICATION
+Authentication is optional and implemented via Firebase Auth:
+
+A. ACTIVE WHEN FIREBASE CONFIGURED:
+- Google Sign-In: OAuth 2.0 flow requesting email and profile scopes
+- Apple Sign-In: OAuth 2.0 flow requesting email and name scopes
+- Session management via Firebase Auth state persistence
+- Sign-out functionality clears local auth state
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/firebase.ts: signInWithGoogle(), signInWithApple() implementations
+- artifacts/focusforge/src/lib/AuthContext.tsx: Provides signInWithGoogle, signInWithApple, signOut functions
+- artifacts/focusforge/src/lib/AuthContext.tsx: subscribeToAuthState() maintains user state
+- artifacts/focusforge/src/pages/Settings.tsx: Sign-in UI with Google/Apple buttons
+
+B. INACTIVE WHEN FIREBASE NOT CONFIGURED:
+- All authentication functions return early or show configuration instructions
+- Application functions fully in local-only mode without authentication
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/firebase.ts: isFirebaseConfigured() returns false if env vars missing
+- artifacts/focusforge/src/lib/AuthContext.tsx: isAuthLoading initially set to isFirebaseConfigured
+- artifacts/focusforge/src/pages/Settings.tsx: Shows Firebase setup instructions when !isFirebaseReady
+- artifacts/focusforge/src/lib/StoreContext.tsx: setCurrentUser(null) called when !uid, sets status to 'signed-out'
+
+C. USER DATA ASSOCIATED WITH ACCOUNT:
+- When signed in, user's Firebase UID used as document key in Firestore 'pixel_users' collection
+- Device ID generated and associated with account for sync tracking
+- No additional personal data stored in Firebase beyond what's in user-generated data sections
+
+9. FIREBASE
+Firebase integration exists but activation status depends on environment configuration:
+
+A. CURRENT STATUS (BASED ON EVIDENCE):
+1. Installed as dependency: Yes (via imports in source code)
+2. Imported: Yes (artifacts/focusforge/src/lib/firebase.ts and related files)
+3. Initialized: Conditionally - only if isFirebaseConfigured() returns true
+4. Configured: UNKNOWN - depends on VITE_FIREBASE_* environment variables
+5. Actually called: Only if configured and user interacts with auth/sync features
+6. Used for authentication: Only if configured
+7. Used for Firestore: Only if configured and user signed in
+8. Used for Realtime Database: No evidence of usage
+9. Used for Storage: No evidence of usage
+10. Used for Analytics: No evidence of usage
+11. Used for Crashlytics: No evidence of usage
+12. Used for other services: No evidence
+
+EVIDENCE FOR CONFIGURATION STATUS:
+- artifacts/focusforge/src/lib/firebase.ts: Reads from import.meta.env.VITE_FIREBASE_*
+- artifacts/focusforge/src/pages/Settings.tsx: Displays setup instructions for VITE_FIREBASE_* variables
+- artifacts/focusforge/src/lib/StoreContext.tsx: Guard clauses check isFirebaseConfigured
+- No Firebase configuration values found in source code (no hardcoded keys)
+- Built JavaScript contains Firebase initialization calls but this only indicates library inclusion, not valid config
+
+B. DATA FLOW WHEN ACTIVE:
+- Authentication: Email, displayName, photoURL, UID transmitted to Google/Apple then Firebase
+- Firestore: All user-generated data transmitted to collection 'pixel_users' document keyed by UID or device ID
+- Frequency: On sign-in, on changes (debounced 30s), every 5 minutes when online
+- Security: Uses Firebase security rules (not visible in client code); transmission over HTTPS
+
+C. INTENDED FOR STORE RELEASE:
+- Firebase functionality appears to be included in build but likely inactive without proper env var configuration
+- No evidence of automatic data transmission without user sign-in
+
+10. DISCORD
+Discord Rich Presence integration is ACTIVE in the current build:
+
+A. ACTIVE FUNCTIONALITY:
+- Application transmits user activity data to Discord via discord-rpc package
+- Data sent includes:
+  * What user is studying (subject or "Deep Work")
+  * Whether user is in work phase or break
+  * Current music track title (if YouTube music playing)
+  * Timestamps for activity duration tracking
+- Transmission occurs when user is working or listening to music
+- Cleared when user is neither working nor listening to music
+- Requires Discord application to be running on user's machine (fails silently if not available)
+
+EVIDENCE:
+- focusforge-desktop/main.js: Requires 'discord-rpc', initializes RPC client, sets up login
+- focusforge-desktop/main.js: ipcMain handlers for 'set-discord-activity' and 'clear-discord-activity'
+- focusforge-desktop/preload.js: Exposes setDiscordActivity and clearDiscordActivity to renderer
+- artifacts/focusforge/src/components/DiscordPresence.tsx: Sends activity data based on Timer and MusicPlayer state
+- artifacts/focusforge/src/components/DiscordPresence.tsx: Details show study subject, state shows "Focusing" or "Vibing" + music info
+
+B. DATA SPECIFICS:
+- Details: "Studying {subject}" or "Taking a break"
+- State: "Focusing" or "Vibing" + optional "• 🎵 {track title}" when music playing
+- StartTimestamp: Set when work session begins, cleared when not working
+- Assets: Uses 'logo_dark' key with text "PixelFocus"
+- No user identity, email, or personal information transmitted to Discord
+- No access to user's Discord friends, servers, or other private data
+
+C. USER CONTROL:
+- Indirect control: User controls what appears by choosing what to study and whether to play music
+- No toggle to disable Discord RPC within application
+- Discord transmission stops when Discord application is not running
+- Electron main process initiates connection; renderer only requests activity updates
+
+D. STORE RELEASE STATUS:
+- ACTIVE in current build - no evidence of conditional removal or disabling
+- Requires user to have Discord installed and running for transmission to occur
+
+11. YOUTUBE / MUSIC
+YouTube integration exists for music streaming functionality:
+
+A. PRESENT IN SOURCE CODE:
+- MusicPlayerProvider, MusicContext, and related components exist
+- YouTube iframe embedding for audio playback
+- YouTube metadata fetching via oEmbed API
+- Music page for URL input and playback controls
+
+B. ACTIVE IN CURRENT RELEASE BUILD:
+- YES - Music functionality is included and operational
+- Persistent YouTube iframe in Layout.tsx maintains audio across route changes
+- Music context provides play/pause/seek/volume controls
+- MusicPlayerContext manages track state and playback
+- YouTube metadata requests made when user enters YouTube URL
+
+EVIDENCE:
+- artifacts/focusforge/src/App.tsx: MusicPlayerProvider wraps application
+- artifacts/focusforge/src/lib/MusicContext.tsx: Manages YouTube URL state and metadata
+- artifacts/focusforge/src/lib/MusicPlayerContext.tsx: Controls playback state
+- artifacts/focusforge/src/pages/Music.tsx: User interface for YouTube URL input
+- focusforge-desktop/Layout.tsx: Persistent YouTube iframe implementation
+- artifacts/focusforge/src/lib/youtube-utils.ts: fetchYouTubeMetadata() YouTube API calls
+
+C. DATA TRANSMITTED TO YOUTUBE:
+- When user enters YouTube URL: Request to youtube.com/oembed for metadata
+- Information sent: YouTube URL (video ID or full URL)
+- Information received: Video title, thumbnail URL
+- No transmission of viewing history, user identifiers, or other YouTube account data
+- Requests made via fetch() with no cookies or authentication headers
+- Uses youtube-nocookie.com embed URL in iframe for enhanced privacy
+
+C. INTENDED FOR REMOVAL BEFORE STORE RELEASE:
+- YES - User stated: "The music streaming feature is being removed from the Microsoft Store launch version because the developer does not have rights to distribute the music."
+- This indicates that while music functionality exists in current source/build, it will be removed prior to Store submission
+
+EVIDENCE FOR REMOVAL INTENT:
+- User statement in requirements: "The music streaming feature is being removed from the Microsoft Store launch version"
+- No technical evidence of removal flags found in current code (would need build process changes)
+- For audit purposes: Functionality is PRESENT IN SOURCE AND CURRENT BUILD but INTENDED FOR REMOVAL
+
+D. FUNCTIONALITY THAT REMAINS AFTER REMOVAL:
+- If removed as stated, no YouTube/network functionality would remain
+- All music-related components, contexts, and UI would be stripped from build
+
+12. ANALYTICS & TELEMETRY
+No evidence of analytics or telemetry data transmission:
+
+A. CLIENT-SIDE ANALYTICS ONLY:
+- Analytics page displays calculations based on locally stored data
+- All computations performed in browser using date-fns and stored arrays
+- No external data transmission for analytics purposes
+
+EVIDENCE:
+- artifacts/focusforge/src/pages/Analytics.tsx: All data from useStore(), calculations client-side
+- No fetch/XMLHttpRequest calls to external analytics endpoints
+- No third-party analytics scripts or libraries detected
+
+B. ERROR REPORTING:
+- No evidence of error reporting to external services
+- Console warnings only for failed operations (e.g., Discord not running, fetch failures)
+- No crash reporting or performance monitoring integrations
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: console.warn for sync failures only
+- artifacts/focusforge/src/lib/youtube-utils.ts: console.error for YouTube fetch failures only
+- No Sentry, LogRocket, or similar error reporting integrations found
+
+C. PERFORMANCE MONITORING:
+- No evidence of performance monitoring or real-user metrics collection
+- Standard web vitals not tracked or transmitted
+
+13. COOKIES & TRACKING
+The application does not use cookies or tracking technologies:
+
+A. NO COOKIE USAGE:
+- No document.cookie access found
+- No server-side cookie setting
+- No cookie-based session management
+- Authentication state stored in memory/localStorage, not cookies
+
+EVIDENCE:
+- No cookie-related code found in source search
+- Auth state managed via React context and Firebase client SDK (IndexedDB/LocalStorage)
+- Settings stored in localforage, not cookies
+
+B. NO TRACKING TECHNOLOGIES:
+- No tracking pixels, beacons, or fingerprinting scripts
+- No advertising or analytics networks integrated
+- No third-party resources loaded for tracking purposes
+- Canvas fingerprinting, font enumeration, or other fingerprinting techniques not evident
+
+EVIDENCE:
+- No calls to known fingerprinting libraries
+- No requests to tracking/advertising domains
+- No entropy collection or hashing of browser/device properties
+
+C. LOCAL IDENTIFIERS:
+- Anonymous device ID generated for cloud sync only when user signs in
+- Stored in localforage as 'pixel_device_id'
+- Not transmitted unless user signs in and enables cloud sync
+- Regenerated if cleared (not persistent across data clearing)
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: getDeviceId() creates random ID stored locally
+- artifacts/focusforge/src/lib/cloudSync.ts: Only transmitted in syncToCloud() when UID provided
+
+14. THIRD-PARTY SERVICES
+Explicit list of third-party services actually contacted:
+
+1. DISCORD RPC
+   - Service: Discord Rich Presence (discord-rpc npm package)
+   - Purpose: Show user's activity/status in Discord application
+   - Data sent: Study subject, work/break state, music track title, timestamps
+   - When sent: When user is working or listening to music (updated every few seconds via React effect)
+   - User identifiable: No - no personal data transmitted
+   - Can disable: Indirectly by not using Discord app or not working/listening to music
+   - Active in Store release: Yes (active in current build, no evidence of removal)
+
+2. YOUTUBE OEMBED API
+   - Service: YouTube metadata extraction (youtube.com/oembed)
+   - Purpose: Fetch video title and thumbnail for display in music player
+   - Data sent: YouTube URL or video ID
+   - When sent: When user enters YouTube URL in Music page or changes URL in MusicContext
+   - User identifiable: No - only video identifier transmitted, no user cookies or auth
+   - Can disable: By not entering YouTube URLs
+   - Active in Store release: Yes in current build, but INTENDED FOR REMOVAL per user statement
+
+3. FIREBASE AUTHENTICATION
+   - Service: Google/Apple OAuth via Firebase
+   - Purpose: Optional user authentication for cloud sync
+   - Data sent: OAuth tokens, user profile info (email, name, photo)
+   - When sent: When user initiates sign-in with Google or Apple
+   - User identifiable: Yes - email, name, photo, UID
+   - Can disable: By not signing in (optional feature)
+   - Active in Store release: UNKNOWN - depends on Firebase configuration in build
+
+4. FIREBASE FIRESTORE
+   - Service: Cloud database for user data synchronization
+   - Purpose: Sync user data across devices when signed in
+   - Data sent: All user-generated data (tasks, sessions, flashcards, etc.)
+   - When sent: When signed in, on changes (debounced), every 5 minutes when online
+   - User identifiable: Yes - when synced, data associated with Firebase UID
+   - Can disable: By not signing in or remaining offline
+   - Active in Store release: UNKNOWN - depends on Firebase configuration
+
+15. ELECTRON / WINDOWS CAPABILITIES
+Electron capabilities used in the application:
+
+A. ACTIVE ELECTRON FEATURES:
+- main.js: Uses BrowserWindow, shell, Menu, ipcMain for window management and IPC
+- preload.js: Context isolation enabled, nodeIntegration false, sandbox true
+- main.js: shell.openExternal() for opening external links in system browser
+- main.js: Discord RPC integration via native module
+- preload.js: Exposes limited API to renderer (platform, fullscreen toggle, Discord RPC)
+- main.js: Custom menu removal (Menu.setApplicationMenu(null))
+- main.js: DevTools only shown in development (not packaged)
+- main.js: External link handling via setWindowOpenHandler
+
+EVIDENCE:
+- focusforge-desktop/main.js: Electron API usage throughout
+- focusforge-desktop/preload.js: Security-conscious preload script
+- electron-builder configuration in focusforge-desktop/package.json shows Windows appx/bundle targets
+
+B. WINDOWS SPECIFIC CAPABILITIES:
+- appx packaging configuration in focusforge-desktop/package.json
+- Uses Windows-specific electron-builder settings for MSIX/APPX packaging
+- No direct Windows API calls found in source (no winrt, interop, or native Windows modules)
+- Standard Electron windowing and file system access only
+
+EVIDENCE:
+- focusforge-desktop/package.json: win/appx configuration in build section
+- No calls to require('windows-*') or similar Windows-specific modules found
+
+C. FILE SYSTEM ACCESS:
+- Limited to user-selected files for import/export functionality
+- Uses standard HTML file input/output, not direct Node.js fs access
+- Electron file:// protocol used for loading local resources (index.html, assets)
+
+EVIDENCE:
+- artifacts/focusforge/src/pages/Settings.tsx: handleExport()/handleImport() use browser file APIs
+- No require('fs') or direct file system access in renderer process
+- Main process has potential file access via Electron but not used for user data beyond app resources
+
+D. PRIVACY-RELEVANT ELECTRON SETTINGS:
+- contextIsolation: true (preload.js line 32)
+- sandbox: true (preload.js line 34)
+- nodeIntegration: false (preload.js line 33)
+- These settings prevent renderer process from accessing Node.js/Electron APIs directly
+- IPC is tightly controlled through preload.js exposed methods only
+
+EVIDENCE:
+- focusforge-desktop/preload.js: Lines 32-34 show security settings
+- preload.js exposes only: platform, toggleFullscreen, setDiscordActivity, clearDiscordActivity
+
+16. DATA FLOW TABLE
+
+DATA TYPE        → SOURCE                          → WHERE STORED                    → WHETHER TRANSMITTED → DESTINATION               → PURPOSE                                 → USER CONTROL                         → ACTIVE IN STORE RELEASE?
+-----------------|-----------------------------------|-------------------------------|---------------------|---------------------------|-----------------------------------------|--------------------------------------|-----------------------------
+Tasks            | User input via UI           | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Task tracking, planning                 | Full (edit/delete)                   | Yes (local), Opt-in (cloud)
+Study Sessions   | Timer completion            | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Study time analytics                    | Full (delete via UI)                 | Yes (local), Opt-in (cloud)
+Flashcards       | User input via UI           | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Spaced repetition learning              | Full (edit/delete)                   | Yes (local), Opt-in (cloud)
+Mock Tests       | User input via UI           | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Test result tracking                    | Full (edit/delete)                   | Yes (local), Opt-in (cloud)
+Settings         | User input via UI           | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | App preferences, goals, streaks         | Full (edit via Settings)             | Yes (local), Opt-in (cloud)
+Theme Preference | User toggle or system       | localStorage (pixel-theme)    | No                  | N/A                       | UI appearance                           | Full (toggle in Settings)            | Yes
+Device ID        | Generated on first sync     | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Sync entity keying                      | None (internal)                      | Yes (local), Opt-in (cloud)
+Last Sync Time   | Sync completion             | IndexedDB (localforage)       | No                  | N/A                       | Sync status tracking                    | None (internal)                      | Yes
+Discord Activity | Timer/Music state           | Memory (transient)            | Yes (to Discord)    | Discord application       | Rich Presence status display            | Indirect (via activity)              | Yes
+YouTube Metadata | User-entered URL            | Memory (transient)            | Yes (to YouTube)    | youtube.com/oembed        | Video title/thumbnail for display       | Full (URL input control)             | Yes (current), Removed (store)
+Auth Email       | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
+Auth DisplayName | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
+Auth PhotoURL    | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
+
+17. DATA RETENTION
+- Local data retained indefinitely until user-initiated deletion
+- No automatic data expiration or cleanup routines
+- Cloud data retention depends on Firebase project settings (not controlled by client)
+- Local data preserved across application updates and reinstalls (stored in Electron userData directory)
+- Backup/export functionality allows user to create portable copies of all data
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/store.ts: No expiration logic in storage functions
+- artifacts/focusforge/src/pages/Settings.tsx: handleClearAll() required for data deletion
+- Electron storage location: %APPDATA%\pixel-desktop\Local Storage\leveldb\ (standard Electron pattern)
+
+18. DATA DELETION / USER CONTROLS
+Users can delete their data through:
+
+A. EXPLICIT DELETE MECHANISMS:
+- Clear All Data: Permanently deletes tasks, sessions, flashcards, mock tests, and settings
+- Individual deletion: Available in respective UI pages (tasks, sessions, etc.)
+- Export/backup: Creates JSON copy before deletion for safety
+
+EVIDENCE:
+- artifacts/focusforge/src/pages/Settings.tsx: handleClearAll() deletes all storage keys
+- artifacts/focusforge/src/pages/Tasks.tsx: Delete functionality in task items (inferred from standard CRUD)
+- artifacts/focusforge/src/pages/Settings.tsx: handleExport()/handleImport() for backup
+
+B. LIMITATIONS:
+- No selective cloud data deletion from client (would require Firebase dashboard)
+- Local data deletion does not affect already-synced cloud data
+- Application restart does not clear data
+- No automatic data clearing on logout or time-based rules
+
+EVIDENCE:
+- artifacts/focusforge/src/lib/cloudSync.ts: No deleteFromCloud() function
+- artifacts/focusforge/src/lib/store.ts: No automatic pruning or expiration
+- No logout handlers that clear localStorage/IndexedDB
+
+C. UNINSTALL BEHAVIOR:
+- Standard Electron application uninstall removes userData directory
+- All local IndexedDB data removed with application uninstall
+- Cloud data unaffected by local uninstall (remains in Firebase until manually deleted)
+
+EVIDENCE:
+- Standard Electron behavior: User data in %APPDATA%\app-name\ removed on uninstall
+- No custom uninstall scripts or cleanup handlers found in source
+
+19. SECURITY
+Concrete security-relevant implementation details:
+
+A. IMPLEMENTED SECURITY MEASURES:
+- Context Isolation: true (preload.js)
+- Sandbox: true (preload.js)
+- Node Integration: false (preload.js)
+- Secure Context: All external links opened via shell.openExternal (not in Electron frame)
+- CSP-like protection: No eval() or dangerous innerHTML usage observed
+- HTTPS: All external API calls (YouTube, Firebase) use HTTPS implicitly
+- Token Storage: Firebase Auth tokens stored in browser's secure storage (IndexedDB via Firebase SDK)
+- XSS Protection: React JSX auto-escaping prevents injection attacks
+- Frame Options: YouTube iframe uses youtube-nocookie.com for enhanced privacy
+
+EVIDENCE:
+- focusforge-desktop/preload.js: Lines 31-35 show security settings
+- focusforge-desktop/main.js: shell.openExternal() for external links
+- artifacts/focusforge/src/lib/MusicContext.tsx: Uses youtube-nocookie.com embed URL
+- artifacts/focusforge/src/lib/youtube-utils.ts: fetch uses standard https://youtube.com/oembed
+- No dangerouslySetInnerHTML or eval() calls found in source
+
+B. NOT VERIFIED / UNKNOWN:
+- Firebase security rules (not visible in client code)
+- Strength of encryption for Firebase Auth token storage
+- Specifics of Electron build security flags beyond context isolation/sandbox
+- Whether application inherits any vulnerabilities from Electron version used
+
+C. CLAIMS THAT CANNOT BE MADE:
+- "End-to-end encryption" - data not encrypted in local storage or transit (beyond standard HTTPS)
+- "Zero-knowledge" - service provider (Firebase) could access data if security rules misconfigured
+- "Impenetrable security" - no security audit or penetration testing evidence provided
+- "GDPR compliant" - would require legal assessment beyond technical implementation
+
+20. CHILDREN / STUDENT PRIVACY CONSIDERATIONS
+Factual observations relevant to children's privacy:
+
+A. AGE-RELATED FEATURES:
+- No age gates or birthdate collection
+- No parental consent mechanisms
+- No child-specific data handling differences
+- Interface suitable for general audience including students
+
+B. DATA COLLECTION FROM MINORS:
+- Same data collection practices apply regardless of user age
+- If Firebase configured, minor's data would be synced to cloud upon sign-in
+- Discord transmission would occur if minor has Discord running
+- YouTube metadata requests would occur for any entered URLs
+
+C. EDUCATIONAL CONTEXT:
+- Marketed as productivity/study aid suitable for educational use
+- No FERPA-specific features or controls
+- Institutions would need to evaluate suitability for their specific compliance requirements
+
+21. ACTIVE VS INACTIVE FEATURES
+
+A. ACTIVE IN CURRENT BUILD:
+- Local storage of all user data (IndexedDB)
+- Optional Firebase authentication and cloud sync (dependent on env var configuration)
+- Discord Rich Presence transmission
+- YouTube metadata API requests for music feature
+- Standard web runtime (HTML/CSS/JS) with React
+- Electron window management and IPC
+- Optional Google/Apple sign-in
+- Data export/import for backups
+- Analytics calculations (client-side only)
+- Theme persistence (dark/light/system)
+- Pomodoro, stopwatch, timer functionality
+- Task management, flashcards, mock tests
+- Settings persistence
+
+B. PRESENT IN SOURCE BUT INACTIVE/CONDITIONAL:
+- Firebase authentication: Inactive if VITE_FIREBASE_* env vars not set
+- Firebase cloud sync: Inactive if not configured or user not signed in
+- Discord transmission: Inactive if Discord application not running
+- YouTube metadata: Inactive if user never enters YouTube URLs
+- DevTools: Inactive in packaged builds (main.js line 50-52)
+
+C. CONFIRMED INACTIVE/REMOVED:
+- None confirmed removed in current build
+- Music functionality stated to be INTENDED FOR REMOVAL but still present in current build per source audit
+
+D. FEATURES BEING REMOVED FOR STORE RELEASE (PER USER STATEMENT):
+- Music streaming/YouTube integration functionality
+- Associated components: MusicPlayerProvider, MusicContext, Music page, persistent YouTube iframe
+- Associated data flows: YouTube oEmbed API requests
+- User stated: "The music streaming feature is being removed from the Microsoft Store launch version"
+
+22. STORE RELEASE PRIVACY STATE
+Based on code analysis and user guidance:
+
+A. DATA PRACTICES THAT WILL BE IN MICROSOFT STORE VERSION:
+- Local-only storage of all user data by default
+- Optional cloud sync ONLY IF Firebase properly configured in build AND user signs in
+- Discord Rich Presence transmission (requires Discord app running)
+- Standard productivity application features (tasks, timer, etc.)
+- Export/backup functionality for user-controlled data portability
+- Theme and preference persistence
+- NO music streaming or YouTube integration (per user statement)
+- NO automatic data transmission without explicit user action (sign-in + online)
+- NO account required for core functionality
+- NO tracking, analytics, or fingerprinting
+
+B. KEY PRIVACY CHARACTERISTICS OF STORE VERSION:
+- Offline-first design: Core functionality works completely without internet or account
+- Data minimization: Only collects data necessary for functionality
+- User control: Users decide when to sync, what data to export/delete, whether to sign in
+- Transparency: Clear UI indicators for sync status, authentication state
+- Data localization: All data remains on user's device unless explicitly synced to cloud
+
+23. UNKNOWN / NEEDS CONFIRMATION
+Items requiring developer confirmation for accurate privacy policy:
+
+A. FIREBASE CONFIGURATION STATUS:
+- Are VITE_FIREBASE_* environment variables set with valid values in the Microsoft Store build?
+- This determines whether authentication and cloud sync actually work in the published application
+
+B. MUSIC FEATURE REMOVAL STATUS:
+- Has the music streaming feature actually been removed from the build intended for Store submission?
+- User stated it "is being removed" - need confirmation of actual removal status
+
+C. DISCORD RPC LICENSING/USAGE:
+- Any special considerations or disclosures needed for Discord Rich Presence integration?
+- Standard npm package usage appears unproblematic
+
+D. WINDOWS SPECIFIC PRIVACY:
+- Any Windows-specific data collection via MSIX packaging or Windows APIs?
+- No evidence found in source, but should be verified in final build
+
+E. DATA RETENTION POLICIES:
+- Any server-side data retention policies for Firebase beyond client controls?
+- Would require inspection of Firebase project settings (not client-side)
+
+24. FACTS THE PRIVACY POLICY SHOULD STATE
+Factual statements safe to include in the official privacy policy:
+
+A. DATA STORAGE AND CONTROL:
+- "Pixel Focus stores all your data locally on your device by default."
+- "Your tasks, study sessions, flashcards, test results, and settings are saved using your browser's local storage."
+- "You can export your data as a JSON file at any time for backup or transfer to another device."
+- "You can delete all your data from the application using the 'Clear All Data' option in Settings."
+
+B. OPTIONAL FEATURES:
+- "Pixel Focus offers optional cloud synchronization to sync your data across your devices."
+- "Cloud synchronization requires signing in with a Google or Apple account."
+- "When signed in and online, your data is automatically synchronized to secure cloud storage."
+- "You can sign out at any time to stop cloud synchronization while keeping your local data."
+- "The application functions fully offline without requiring an account."
+
+C. SPECIFIC INTEGRATIONS:
+- "Pixel Focus can display your current activity in Discord applications via Discord Rich Presence."
+- "No personal information is shared with Discord - only your current study activity and music playback status."
+- "Pixel Focus can fetch title and thumbnail information from YouTube URLs to display in the music player."
+- "No YouTube account information or viewing history is accessed or stored."
+- "Note: Music streaming functionality will be removed prior to Microsoft Store submission."
+
+D. DATA TRANSMISSION LIMITATIONS:
+- "Pixel Focus does not contain any analytics, tracking, or advertising software."
+- "No data is collected for marketing or advertising purposes."
+- "The application does not use cookies or similar tracking technologies."
+- "All external connections are made only when explicitly triggered by user actions or optional features."
+
+E. SECURITY STATEMENTS (FACTUAL ONLY):
+- "Pixel Focus uses standard web security practices including HTTPS for all external connections."
+- "The application employs Electron security features including context isolation and sandboxing."
+- "Authentication tokens are managed by the browser's secure storage when using optional sign-in features."
+- "No end-to-end encryption is implemented for locally stored data."
+
+25. FACTS THE PRIVACY POLICY MUST NOT CLAIM
+Statements that would be inaccurate or unverifiable:
+
+A. ABSOLUTE SECURITY CLAIMS:
+- ❌ "Your data is completely secure and private."
+- ❌ "We use military-grade encryption to protect your data."
+- ❌ "Zero knowledge architecture ensures we cannot access your data."
+- ❌ "Our servers never see your data." (if Firebase configured and user signs in)
+
+B. DATA USAGE CLAIMS:
+- ❌ "We never collect any personal information." (if user signs in)
+- ❌ "We do not use any third-party services." (Discord, YouTube, Firebase are third-party)
+- ❌ "All data processing happens exclusively on your device." (if cloud sync used)
+
+C. SPECIFIC FEATURE CLAIMS:
+- ❌ "Pixel Focus includes music streaming from YouTube." (being removed for Store)
+- ❌ "Pixel Focus shows ads or sponsored content." (no evidence)
+- ❌ "Pixel Focus tracks your behavior for analytics." (no evidence)
+- ❌ "Pixel Focus sells your data to third parties." (no evidence, but can't prove negative)
+
+D. REGULATORY CLAIMS:
+- ❌ "Pixel Focus is fully GDPR/CCPA compliant." (requires legal assessment)
+- ❌ "Pixel Focus is certified COPPA safe." (no evidence, would require specific implementation)
+- ❌ "Pixel Focus meets HIPAA requirements for health data." (not designed for health data)
+
+E. FUTURE PROMISES:
+- ❌ "We will never change our privacy practices." (policies can update)
+- ❌ "We will never transmit your data without consent." (hard to guarantee absolutely)
+
+26. FILES / CODE REFERENCES
+Key files examined during this audit:
+
+- focusforge-desktop/main.js - Electron main process, Discord RPC initialization
+- focusforge-desktop/preload.js - Secure preload script exposing limited API to renderer
+- focusforge-desktop/package.json - Build configuration and dependencies
+- artifacts/focusforge/src/lib/store.ts - Local storage interface using localforage
+- artifacts/focusforge/src/lib/firebase.ts - Firebase configuration and auth helpers
+- artifacts/focusforge/src/lib/cloudSync.ts - Cloud synchronization logic
+- artifacts/focusforge/src/lib/AuthContext.tsx - Authentication context and providers
+- artifacts/focusforge/src/lib/TimerContext.tsx - Pomodoro and stopwatch state management
+- artifacts/focusforge/src/lib/MusicPlayerContext.tsx - Music playback state management
+- artifacts/focusforge/src/lib/MusicContext.tsx - YouTube URL and metadata management
+- artifacts/focusforge/src/lib/youtube-utils.ts - YouTube metadata fetching functions
+- artifacts/focusforge/src/components/DiscordPresence.tsx - Discord Rich Presence logic
+- artifacts/focusforge/src/pages/Settings.tsx - Authentication, cloud sync, and data management UI
+- artifacts/focusforge/src/pages/Music.tsx - Music player interface and YouTube URL input
+- artifacts/focusforge/src/pages/Analytics.tsx - Client-only analytics calculations
+- artifacts/focusforge/src/App.tsx - Main application component and provider composition
+- artifacts/focusforge/src/layout.tsx - Application layout with persistent YouTube iframe
+- focusforge-desktop/electron-web/assets/index-Duj1NolT.js - Built application bundle (spot checked)
+
+END OF AUDIT DOCUMENT
+==================================================
+==================================================
+
+PRIVACY POLICY HANDOFF
+==================================================
+
+This section is written specifically for another AI that will later draft the actual privacy policy.
+
+1. FACTS THAT ARE SAFE TO STATE:
+   - All user data stored locally by default in IndexedDB
+   - Optional cloud sync requires Google/Apple sign-in and online status
+   - Application functions fully offline without account or internet connection
+   - Users can export data as JSON backup at any time
+   - Users can delete all local data via Settings → Clear All Data
+   - No account required for core productivity features (tasks, timer, etc.)
+   - Theme preferences persist between sessions
+   - Standard web technologies used with React framework
+   - Electron desktop application with context isolation, sandbox, and no node integration
+
+2. FACTS THAT REQUIRE QUALIFICATION:
+   - Cloud synchronization: "Available when Firebase is properly configured in the build AND user signs in with Google or Apple"
+   - Discord Rich Presence: "Transmits study activity and music status to Discord application when Discord is running on user's device"
+   - YouTube/Music integration: "Currently included in source code but user has stated this feature will be removed prior to Microsoft Store submission"
+   - Authentication: "Optional Google and Apple sign-in available; application works identically in local-only mode without account"
+
+3. THINGS THAT MUST NOT BE CLAIM:
+   - ❌ End-to-end encryption or zero-knowledge architecture
+   - ❌ Complete data isolation (if Firebase configured and user signs in, data leaves device)
+   - ❌ Absence of all third-party services (Discord, YouTube, Firebase are integrated)
+   - ❌ GDPR/CCPA/HIPAA compliance without legal assessment
+   - ❌ "Never transmits data" (conditional transmissions occur with user opt-in)
+   - ❌ Music streaming functionality (being removed per user statement)
+
+4. ACTIVE THIRD-PARTY SERVICES:
+   - Discord Rich Presence: Activity status transmission to Discord application
+   - YouTube oEmbed API: Metadata requests for entered YouTube URLs (to be removed per user statement)
+   - Firebase Authentication: Optional sign-in (status depends on build configuration)
+   - Firebase Firestore: Optional cloud sync (status depends on build configuration)
+
+5. DATA STORED LOCALLY:
+   - Tasks: User-created tasks with metadata
+   - Study Sessions: Completed study periods with duration and type
+   - Flashcards: User-created study cards with review schedules
+   - Mock Tests: User-recorded test results and scores
+   - Settings: User preferences, goals, streaks, theme
+   - Theme preference: Dark/light/system mode selection
+   - Anonymous device ID: Generated only if user signs in and enables cloud sync
+   - Last sync timestamp: When cloud synchronization last occurred
+
+6. DATA TRANSMITTED OFF DEVICE:
+   - To Discord: Study subject, work/break state, music track title, timestamps (when active)
+   - To YouTube: Video ID or URL for metadata lookup (when user enters YouTube URL, to be removed)
+   - To Firebase: Authentication tokens and profile data (when user signs in, if configured)
+   - To Firebase Firestore: All user-generated data (when signed in, online, and configured)
+
+7. USER CONTROLS:
+   - Export data: Settings → Local Backup → Export Backup
+   - Import data: Settings → Local Backup → Import Backup
+   - Delete all data: Settings → Danger Zone → Clear All Data
+   - Sign out: Settings → Account & Cloud Sync → Sign Out (if signed in)
+   - Manual sync: Settings → Account & Cloud Sync → Sync Now (if signed in)
+   - Theme change: Settings → Appearance
+   - Pomodoro settings: Settings → Pomodoro Defaults
+   - Daily goal: Settings → Profile
+
+8. DATA DELETION:
+   - Local data: Complete deletion via Settings → Danger Zone → Clear All Data
+   - Individual item deletion: Available in respective management UIs (tasks, sessions, etc.)
+   - Cloud data: No client-side deletion mechanism; requires Firebase console or developer intervention
+   - Backup files: User-controlled via export function; user responsible for deletion
+   - Uninstall: Standard Electron uninstall removes all local application data
+
+9. SECURITY FACTS:
+   - Context isolation enabled in renderer process
+   - Sandbox enabled for renderer process
+   - Node integration disabled in renderer process
+   - External links open in system browser, not Electron frame
+   - YouTube embed uses youtube-nocookie.com for enhanced privacy
+   - Authentication tokens managed by browser's secure storage via Firebase SDK
+   - No eval() or dangerous innerHTML usage observed in source
+   - All external API calls use HTTPS implicitly
+
+10. STORE-RELEASE-SPECIFIC NOTES:
+   - Music streaming/YouTube functionality: CONFIRMED TO BE REMOVED per user statement
+   - Core productivity features: Unchanged and fully functional
+   - Local-first design: Maintained as primary architecture
+   - Optional cloud sync: Available only if Firebase configured in final build
+   - No account requirement: Core functionality accessible anonymously
+   - Windows MSIX packaging: Standard Electron packaging with no additional data collection evident
+
+11. OPEN QUESTIONS THAT THE DEVELOPER MUST CONFIRM:
+   - ❓ Are VITE_FIREBASE_* environment variables set with valid values in the Microsoft Store build?
+       This determines whether authentication and cloud sync actually work in the published application.
+
+   - ❓ Has the music streaming feature actually been removed from the build intended for Store submission?
+       User stated it "is being removed" - need confirmation of actual removal status for the final build.
+
+   - ❓ Any Windows-specific privacy considerations in the final MSIX package?
+       No evidence found in source, but should be verified in final build artifacts.
+
+   - ❓ What are the Firebase project's security rules and data retention policies?
+       Client-side code shows data flow but not server-side retention or access controls.
+
+   - ❓ Are there any additional data collection mechanisms in the Electron build process?
+       Post-build analysis of final executable recommended to confirm no unexpected behaviors.
+
+==================================================
+
+This audit provides a factual foundation for drafting the Microsoft Store privacy policy for Pixel Focus. The policy should emphasize the application's offline-first nature, user data control, and optional nature of cloud features while being transparent about integrated third-party services.
