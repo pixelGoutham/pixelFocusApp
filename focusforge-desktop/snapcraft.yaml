@@ -127,6 +127,6 @@ hooks:
     - |
       # Copy the icon to the snap data directory
       mkdir -p $SNAP_USER_DATA/.local/share/icons/hicolor/256x256/apps
-      cp $SNAP/usr/local/share/pixel-focus-app/build/logo_dark.png \
+      cp $SNAP/usr/local/share/pixel-focus-app/logo/logo_dark.png \
          $SNAP_USER_DATA/.local/share/icons/hicolor/256x256/apps/pixel-focus-app.png
       gtk-update-icon-cache $SNAP_USER_DATA/.local/share/icons/hicolor || true

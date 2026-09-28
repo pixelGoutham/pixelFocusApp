@@ -21,7 +21,7 @@ function initDiscordRPC() {
 
 function createWindow() {
   const win = new BrowserWindow({
-    icon: path.join(__dirname, 'build/logo_dark.ico'),
+    icon: path.join(app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'), 'logo', 'logo_dark.ico'),
     width: 1440,
     height: 900,
     minWidth: 960,

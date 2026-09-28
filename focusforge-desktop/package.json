@@ -1,6 +1,6 @@
 {
   "name": "pixel-desktop",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "author": "Goutham Kumar A",
   "description": "Pixel Focus - The Ultimate App to Lock In",
   "main": "main.js",
@@ -20,7 +20,8 @@
     "productName": "Pixel Focus",
     "copyright": "Copyright © 2026 Goutham Kumar A",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "../logo"
     },
     "files": [
       "main.js",
@@ -34,34 +35,44 @@
       {
         "from": "build",
         "to": "build"
+      },
+      {
+        "from": "logo",
+        "to": "logo"
       }
     ],
     "win": {
-      "icon": "./build/logo_dark.ico",
+      "icon": "./logo/logo_dark.ico",
       "target": [
         {
           "target": "appx",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
     "appx": {
-      "applicationId": "PixelFocus", 
+      "applicationId": "PixelFocus",
       "identityName": "PixelInc.PixelFocus",
       "publisher": "CN=38A30AA3-1F11-405F-8B95-4AE3C413E3A4",
       "publisherDisplayName": "Pixel_Inc",
-      "backgroundColor": "transparent"
+      "backgroundColor": "#232427"
     },
     "mac": {
       "target": "dmg"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "./build/logo_dark.png"
+      "icon": "./logo/logo_dark.png"
     },
     "nsis": {
       "oneClick": false,

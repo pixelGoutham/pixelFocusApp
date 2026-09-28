@@ -178,6 +178,18 @@ For any questions regarding the architecture or specific modules, refer to the s
 
 ## Recent Changes and Updates Log
 
+### September 29, 2026 - Logo Asset Reorganization
+- Reorganized all logo and image assets under a single `logo/` directory as the single source of truth.
+- Removed duplicate files from the root and `focusforge-desktop/electron-web/` after verifying they were unused.
+- Updated all references to point to assets in `logo/`:
+  - Favicon in `index.html` now references `../logo/logo_light.ico`.
+  - Electron application icon (Windows/Linux) now uses `logo/logo_dark.ico` and `logo/logo_dark.png`.
+  - Snapcraft icon copy updated to use `logo/logo_dark.png`.
+- Configured electron-builder to package the `logo/` directory via `extraResources`.
+- Ensured AppX assets are available by copying `logo/appx/` into the build directory (root) for electron-builder to pick up by default names.
+- No changes to application behavior, UI design, or package.json version.
+- Master asset `logo_dark.png` (1024x1024) remains unmodified.
+
 ### September 27, 2026 - Version 2.2 Release
 - **Version Bump**: Updated package.json version from 1.0.0 to 2.2.0
 - **Rebranding**: Changed application name from "Pixel" to "Pixel Focus" throughout
