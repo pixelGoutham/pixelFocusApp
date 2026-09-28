@@ -37,12 +37,12 @@
         "to": "build"
       },
       {
-        "from": "logo",
+        "from": "../logo",
         "to": "logo"
       }
     ],
     "win": {
-      "icon": "./logo/logo_dark.ico",
+      "icon": "../logo/logo_dark.ico",
       "target": [
         {
           "target": "appx",
@@ -65,14 +65,14 @@
       "identityName": "PixelInc.PixelFocus",
       "publisher": "CN=38A30AA3-1F11-405F-8B95-4AE3C413E3A4",
       "publisherDisplayName": "Pixel_Inc",
-      "backgroundColor": "#232427"
+      "backgroundColor": "transparent"
     },
     "mac": {
       "target": "dmg"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "./logo/logo_dark.png"
+      "icon": "../logo/logo_dark.png"
     },
     "nsis": {
       "oneClick": false,
