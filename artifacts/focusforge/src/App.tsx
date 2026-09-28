@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/AuthContext";
 import { StoreProvider, useStore } from "@/lib/StoreContext";
-import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 import { TimerProvider } from "@/lib/TimerContext";
 import { DiscordPresence } from '@/components/DiscordPresence';
 import { ThemeProvider } from "@/lib/ThemeContext";
@@ -98,18 +97,16 @@ function AppInner() {
           <StoreProvider>
             <ThemeProvider>
               <TimerProvider>
-                <MusicPlayerProvider>
-                  <DiscordPresence />
-                  {isElectron ? (
-                    <WouterRouter hook={useHashLocation}>
-                      <AppRouter />
-                    </WouterRouter>
-                  ) : (
-                    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                      <AppRouter />
-                    </WouterRouter>
-                  )}
-                </MusicPlayerProvider>
+                <DiscordPresence />
+                {isElectron ? (
+                  <WouterRouter hook={useHashLocation}>
+                    <AppRouter />
+                  </WouterRouter>
+                ) : (
+                  <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                    <AppRouter />
+                  </WouterRouter>
+                )}
               </TimerProvider>
             </ThemeProvider>
           </StoreProvider>
