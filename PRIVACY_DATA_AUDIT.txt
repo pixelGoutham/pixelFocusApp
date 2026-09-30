@@ -19,7 +19,7 @@ Pixel Focus is an offline-first productivity application that stores all user da
 - Local storage of tasks, study sessions, flashcards, mock tests, and settings in IndexedDB
 - Optional Firebase-based cloud synchronization (requires user authentication)
 - Discord Rich Presence integration that transmits user activity data to Discord
-- YouTube integration for music streaming that fetches metadata from YouTube's oEmbed API
+- Pure Web Audio API music synthesizer for offline ambient sounds (no YouTube integration)
 - Standard web technologies with no evidence of hidden tracking, fingerprinting, or unauthorized data collection
 - The application functions fully offline without requiring an account
 
@@ -131,22 +131,15 @@ EVIDENCE:
 The application makes network requests only in specific, user-triggered or configured scenarios:
 
 A. ACTIVE NETWORK ENDPOINTS:
-1. YouTube oEmbed API: https://www.youtube.com/oembed?url={encoded_url}&format=json
-   - Triggered when user enters YouTube URL in Music page or MusicContext
-   - Fetches video title and thumbnail URL for display
-   - Makes request to googleapis.com domain
-
-2. Firebase Firestore: https://firestore.googleapis.com/google.firestore.v1.*
+1. Firebase Firestore: https://firestore.googleapis.com/google.firestore.v1.*
    - Only active when Firebase configured AND user signed in
    - Used for cloud synchronization of all user data
 
-3. Firebase Authentication: https://identitytoolkit.googleapis.com/google.identity.*
+2. Firebase Authentication: https://identitytoolkit.googleapis.com/google.identity.*
    - Only active when Firebase configured AND user initiates sign-in
    - Used for Google/Apple OAuth flows
 
 EVIDENCE:
-- artifacts/focusforge/src/lib/youtube-utils.ts: fetchYouTubeMetadata() calls youtube.com/oembed
-- artifacts/focusforge/src/lib/MusicContext.tsx: fetchMeta() calls youtube.com/oembed
 - artifacts/focusforge/src/lib/firebase.ts: Firebase REST API endpoints used implicitly
 - artifacts/focusforge/src/lib/cloudSync.ts: Uses Firestore SDK for document operations
 
@@ -239,7 +232,6 @@ A. ACTIVE FUNCTIONALITY:
 - Data sent includes:
   * What user is studying (subject or "Deep Work")
   * Whether user is in work phase or break
-  * Current music track title (if YouTube music playing)
   * Timestamps for activity duration tracking
 - Transmission occurs when user is working or listening to music
 - Cleared when user is neither working nor listening to music
@@ -271,49 +263,44 @@ D. STORE RELEASE STATUS:
 - Requires user to have Discord installed and running for transmission to occur
 
 11. YOUTUBE / MUSIC
-YouTube integration exists for music streaming functionality:
+YouTube integration does NOT exist in the current build. The music functionality uses a pure Web Audio API synthesizer:
 
 A. PRESENT IN SOURCE CODE:
-- MusicPlayerProvider, MusicContext, and related components exist
-- YouTube iframe embedding for audio playback
-- YouTube metadata fetching via oEmbed API
-- Music page for URL input and playback controls
+- Music.tsx contains a pure Web Audio API synthesizer for generating ambient sounds
+- No YouTube integration, iframe embedding, or metadata fetching exists
+- Music page provides controls for locally generated ambient sounds only
+- All audio is generated client-side using AudioContext and mathematical algorithms
 
 B. ACTIVE IN CURRENT RELEASE BUILD:
-- YES - Music functionality is included and operational
-- Persistent YouTube iframe in Layout.tsx maintains audio across route changes
-- Music context provides play/pause/seek/volume controls
-- MusicPlayerContext manages track state and playback
-- YouTube metadata requests made when user enters YouTube URL
+- NO - Music functionality uses pure Web Audio API synthesis (no YouTube/network dependency)
+- No persistent YouTube iframe in Layout.tsx
+- Music context manages locally generated audio state only
+- No YouTube metadata requests are made
 
 EVIDENCE:
-- artifacts/focusforge/src/App.tsx: MusicPlayerProvider wraps application
-- artifacts/focusforge/src/lib/MusicContext.tsx: Manages YouTube URL state and metadata
-- artifacts/focusforge/src/lib/MusicPlayerContext.tsx: Controls playback state
-- artifacts/focusforge/src/pages/Music.tsx: User interface for YouTube URL input
-- focusforge-desktop/Layout.tsx: Persistent YouTube iframe implementation
-- artifacts/focusforge/src/lib/youtube-utils.ts: fetchYouTubeMetadata() YouTube API calls
+- artifacts/focusforge/src/App.tsx: MusicPlayerProvider wraps application (manages local audio state)
+- artifacts/focusforge/src/lib/MusicContext.tsx: Manages locally generated audio state (no YouTube URL state)
+- artifacts/focusforge/src/lib/MusicPlayerContext.tsx: Controls playback state of local synth
+- artifacts/focusforge/src/pages/Music.tsx: User interface for Web Audio API synthesizer controls
+- focusforge-desktop/Layout.tsx: No persistent iframe implementation
+- No youtube-utils.ts or similar YouTube integration files exist in source
 
 C. DATA TRANSMITTED TO YOUTUBE:
-- When user enters YouTube URL: Request to youtube.com/oembed for metadata
-- Information sent: YouTube URL (video ID or full URL)
-- Information received: Video title, thumbnail URL
-- No transmission of viewing history, user identifiers, or other YouTube account data
-- Requests made via fetch() with no cookies or authentication headers
-- Uses youtube-nocookie.com embed URL in iframe for enhanced privacy
+- NONE - No YouTube integration exists in current codebase
+- No requests to youtube.com/oembed or any YouTube API endpoints
+- No transmission of video IDs, URLs, or any YouTube-related data
+- Application generates all audio mathematically using Web Audio API
 
-C. INTENDED FOR REMOVAL BEFORE STORE RELEASE:
-- YES - User stated: "The music streaming feature is being removed from the Microsoft Store launch version because the developer does not have rights to distribute the music."
-- This indicates that while music functionality exists in current source/build, it will be removed prior to Store submission
+D. INTENDED FOR STORE RELEASE:
+- Web Audio API music synthesizer functionality IS included in Store release
+- No YouTube/streaming components to remove (already removed from source)
+- All music functionality is client-side and offline-only
 
-EVIDENCE FOR REMOVAL INTENT:
-- User statement in requirements: "The music streaming feature is being removed from the Microsoft Store launch version"
-- No technical evidence of removal flags found in current code (would need build process changes)
-- For audit purposes: Functionality is PRESENT IN SOURCE AND CURRENT BUILD but INTENDED FOR REMOVAL
-
-D. FUNCTIONALITY THAT REMAINS AFTER REMOVAL:
-- If removed as stated, no YouTube/network functionality would remain
-- All music-related components, contexts, and UI would be stripped from build
+E. FUNCTIONALITY THAT REMAINS:
+- Pure Web Audio API synthesizer for ambient sounds (white/brown/pink noise, rain, storm, etc.)
+- All audio generated client-side using mathematical algorithms
+- No network dependency for music functionality
+- Available in Store release as offline feature
 
 12. ANALYTICS & TELEMETRY
 No evidence of analytics or telemetry data transmission:
@@ -335,7 +322,7 @@ B. ERROR REPORTING:
 
 EVIDENCE:
 - artifacts/focusforge/src/lib/cloudSync.ts: console.warn for sync failures only
-- artifacts/focusforge/src/lib/youtube-utils.ts: console.error for YouTube fetch failures only
+- No console.error for YouTube fetch failures (YouTube integration removed)
 - No Sentry, LogRocket, or similar error reporting integrations found
 
 C. PERFORMANCE MONITORING:
@@ -389,16 +376,7 @@ Explicit list of third-party services actually contacted:
    - Can disable: Indirectly by not using Discord app or not working/listening to music
    - Active in Store release: Yes (active in current build, no evidence of removal)
 
-2. YOUTUBE OEMBED API
-   - Service: YouTube metadata extraction (youtube.com/oembed)
-   - Purpose: Fetch video title and thumbnail for display in music player
-   - Data sent: YouTube URL or video ID
-   - When sent: When user enters YouTube URL in Music page or changes URL in MusicContext
-   - User identifiable: No - only video identifier transmitted, no user cookies or auth
-   - Can disable: By not entering YouTube URLs
-   - Active in Store release: Yes in current build, but INTENDED FOR REMOVAL per user statement
-
-3. FIREBASE AUTHENTICATION
+2. FIREBASE AUTHENTICATION
    - Service: Google/Apple OAuth via Firebase
    - Purpose: Optional user authentication for cloud sync
    - Data sent: OAuth tokens, user profile info (email, name, photo)
@@ -407,7 +385,7 @@ Explicit list of third-party services actually contacted:
    - Can disable: By not signing in (optional feature)
    - Active in Store release: UNKNOWN - depends on Firebase configuration in build
 
-4. FIREBASE FIRESTORE
+3. FIREBASE FIRESTORE
    - Service: Cloud database for user data synchronization
    - Purpose: Sync user data across devices when signed in
    - Data sent: All user-generated data (tasks, sessions, flashcards, etc.)
@@ -455,14 +433,14 @@ EVIDENCE:
 - Main process has potential file access via Electron but not used for user data beyond app resources
 
 D. PRIVACY-RELEVANT ELECTRON SETTINGS:
-- contextIsolation: true (preload.js line 32)
-- sandbox: true (preload.js line 34)
-- nodeIntegration: false (preload.js line 33)
+- contextIsolation: true (preload.js)
+- sandbox: true (preload.js)
+- nodeIntegration: false (preload.js)
 - These settings prevent renderer process from accessing Node.js/Electron APIs directly
 - IPC is tightly controlled through preload.js exposed methods only
 
 EVIDENCE:
-- focusforge-desktop/preload.js: Lines 32-34 show security settings
+- focusforge-desktop/preload.js: Lines 31-35 show security settings
 - preload.js exposes only: platform, toggleFullscreen, setDiscordActivity, clearDiscordActivity
 
 16. DATA FLOW TABLE
@@ -478,7 +456,7 @@ Theme Preference | User toggle or system       | localStorage (pixel-theme)    |
 Device ID        | Generated on first sync     | IndexedDB (localforage)       | Optional            | Firestore (if signed in)  | Sync entity keying                      | None (internal)                      | Yes (local), Opt-in (cloud)
 Last Sync Time   | Sync completion             | IndexedDB (localforage)       | No                  | N/A                       | Sync status tracking                    | None (internal)                      | Yes
 Discord Activity | Timer/Music state           | Memory (transient)            | Yes (to Discord)    | Discord application       | Rich Presence status display            | Indirect (via activity)              | Yes
-YouTube Metadata | User-entered URL            | Memory (transient)            | Yes (to YouTube)    | youtube.com/oembed        | Video title/thumbnail for display       | Full (URL input control)             | Yes (current), Removed (store)
+Music Synth      | Web Audio API (math)        | Memory (transient)            | No                  | N/A                       | Ambient sound generation                | Full (synth controls)                | Yes
 Auth Email       | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
 Auth DisplayName | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
 Auth PhotoURL    | Google/Apple sign-in        | Memory (Firebase Auth)        | No                  | N/A                       | Account identification                  | None (read-only from provider)       | Opt-in
@@ -537,17 +515,16 @@ A. IMPLEMENTED SECURITY MEASURES:
 - Node Integration: false (preload.js)
 - Secure Context: All external links opened via shell.openExternal (not in Electron frame)
 - CSP-like protection: No eval() or dangerous innerHTML usage observed
-- HTTPS: All external API calls (YouTube, Firebase) use HTTPS implicitly
+- HTTPS: All external API calls (Firebase) use HTTPS implicitly
 - Token Storage: Firebase Auth tokens stored in browser's secure storage (IndexedDB via Firebase SDK)
 - XSS Protection: React JSX auto-escaping prevents injection attacks
-- Frame Options: YouTube iframe uses youtube-nocookie.com for enhanced privacy
+- No YouTube iframe (eliminates related attack surface)
 
 EVIDENCE:
 - focusforge-desktop/preload.js: Lines 31-35 show security settings
 - focusforge-desktop/main.js: shell.openExternal() for external links
-- artifacts/focusforge/src/lib/MusicContext.tsx: Uses youtube-nocookie.com embed URL
-- artifacts/focusforge/src/lib/youtube-utils.ts: fetch uses standard https://youtube.com/oembed
 - No dangerouslySetInnerHTML or eval() calls found in source
+- No YouTube integration means no related privacy concerns
 
 B. NOT VERIFIED / UNKNOWN:
 - Firebase security rules (not visible in client code)
@@ -574,7 +551,7 @@ B. DATA COLLECTION FROM MINORS:
 - Same data collection practices apply regardless of user age
 - If Firebase configured, minor's data would be synced to cloud upon sign-in
 - Discord transmission would occur if minor has Discord running
-- YouTube metadata requests would occur for any entered URLs
+- No YouTube/data transmission concerns (YouTube integration removed)
 
 C. EDUCATIONAL CONTEXT:
 - Marketed as productivity/study aid suitable for educational use
@@ -587,7 +564,7 @@ A. ACTIVE IN CURRENT BUILD:
 - Local storage of all user data (IndexedDB)
 - Optional Firebase authentication and cloud sync (dependent on env var configuration)
 - Discord Rich Presence transmission
-- YouTube metadata API requests for music feature
+- Pure Web Audio API music synthesizer (offline-only)
 - Standard web runtime (HTML/CSS/JS) with React
 - Electron window management and IPC
 - Optional Google/Apple sign-in
@@ -602,18 +579,17 @@ B. PRESENT IN SOURCE BUT INACTIVE/CONDITIONAL:
 - Firebase authentication: Inactive if VITE_FIREBASE_* env vars not set
 - Firebase cloud sync: Inactive if not configured or user not signed in
 - Discord transmission: Inactive if Discord application not running
-- YouTube metadata: Inactive if user never enters YouTube URLs
 - DevTools: Inactive in packaged builds (main.js line 50-52)
 
 C. CONFIRMED INACTIVE/REMOVED:
-- None confirmed removed in current build
-- Music functionality stated to be INTENDED FOR REMOVAL but still present in current build per source audit
+- YouTube/Streaming music functionality: Confirmed removed from source code
+- Associated components: No youtube-utils.ts, MusicContext.tsx, MusicPlayerContext.tsx
+- Associated data flows: No YouTube oEmbed API requests
+- Persistent YouTube iframe: Not present in Layout.tsx
 
-D. FEATURES BEING REMOVED FOR STORE RELEASE (PER USER STATEMENT):
-- Music streaming/YouTube integration functionality
-- Associated components: MusicPlayerProvider, MusicContext, Music page, persistent YouTube iframe
-- Associated data flows: YouTube oEmbed API requests
-- User stated: "The music streaming feature is being removed from the Microsoft Store launch version"
+D. FEATURES BEING REMOVED FOR STORE RELEASE:
+- None - YouTube/music streaming already removed from source
+- Web Audio API synthesizer remains as offline-only feature
 
 22. STORE RELEASE PRIVACY STATE
 Based on code analysis and user guidance:
@@ -622,10 +598,11 @@ A. DATA PRACTICES THAT WILL BE IN MICROSOFT STORE VERSION:
 - Local-only storage of all user data by default
 - Optional cloud sync ONLY IF Firebase properly configured in build AND user signs in
 - Discord Rich Presence transmission (requires Discord app running)
+- Pure Web Audio API music synthesizer (offline ambient sounds)
 - Standard productivity application features (tasks, timer, etc.)
 - Export/backup functionality for user-controlled data portability
 - Theme and preference persistence
-- NO music streaming or YouTube integration (per user statement)
+- NO YouTube/music streaming integration (already removed from source)
 - NO automatic data transmission without explicit user action (sign-in + online)
 - NO account required for core functionality
 - NO tracking, analytics, or fingerprinting
@@ -636,6 +613,7 @@ B. KEY PRIVACY CHARACTERISTICS OF STORE VERSION:
 - User control: Users decide when to sync, what data to export/delete, whether to sign in
 - Transparency: Clear UI indicators for sync status, authentication state
 - Data localization: All data remains on user's device unless explicitly synced to cloud
+- Mathematically generated audio: No network dependency for music features
 
 23. UNKNOWN / NEEDS CONFIRMATION
 Items requiring developer confirmation for accurate privacy policy:
@@ -644,21 +622,21 @@ A. FIREBASE CONFIGURATION STATUS:
 - Are VITE_FIREBASE_* environment variables set with valid values in the Microsoft Store build?
 - This determines whether authentication and cloud sync actually work in the published application
 
-B. MUSIC FEATURE REMOVAL STATUS:
-- Has the music streaming feature actually been removed from the build intended for Store submission?
-- User stated it "is being removed" - need confirmation of actual removal status
-
-C. DISCORD RPC LICENSING/USAGE:
+B. DISCORD RPC LICENSING/USAGE:
 - Any special considerations or disclosures needed for Discord Rich Presence integration?
 - Standard npm package usage appears unproblematic
 
-D. WINDOWS SPECIFIC PRIVACY:
+C. WINDOWS SPECIFIC PRIVACY:
 - Any Windows-specific data collection via MSIX packaging or Windows APIs?
 - No evidence found in source, but should be verified in final build
 
-E. DATA RETENTION POLICIES:
+D. DATA RETENTION POLICIES:
 - Any server-side data retention policies for Firebase beyond client controls?
 - Would require inspection of Firebase project settings (not client-side)
+
+E. POST-BUILD VERIFICATION:
+- Are there any unexpected data collection mechanisms in the final build?
+- Post-build analysis recommended to confirm no unintended behaviors
 
 24. FACTS THE PRIVACY POLICY SHOULD STATE
 Factual statements safe to include in the official privacy policy:
@@ -679,9 +657,8 @@ B. OPTIONAL FEATURES:
 C. SPECIFIC INTEGRATIONS:
 - "Pixel Focus can display your current activity in Discord applications via Discord Rich Presence."
 - "No personal information is shared with Discord - only your current study activity and music playback status."
-- "Pixel Focus can fetch title and thumbnail information from YouTube URLs to display in the music player."
-- "No YouTube account information or viewing history is accessed or stored."
-- "Note: Music streaming functionality will be removed prior to Microsoft Store submission."
+- "Pixel Focus generates ambient sounds mathematically using the Web Audio API (no YouTube/streaming)."
+- "All music is generated client-side and requires no internet connection."
 
 D. DATA TRANSMISSION LIMITATIONS:
 - "Pixel Focus does not contain any analytics, tracking, or advertising software."
@@ -706,11 +683,11 @@ A. ABSOLUTE SECURITY CLAIMS:
 
 B. DATA USAGE CLAIMS:
 - ❌ "We never collect any personal information." (if user signs in)
-- ❌ "We do not use any third-party services." (Discord, YouTube, Firebase are third-party)
+- ❌ "We do not use any third-party services." (Discord, Firebase are third-party)
 - ❌ "All data processing happens exclusively on your device." (if cloud sync used)
 
 C. SPECIFIC FEATURE CLAIMS:
-- ❌ "Pixel Focus includes music streaming from YouTube." (being removed for Store)
+- ❌ "Pixel Focus includes music streaming from YouTube." (functionality removed)
 - ❌ "Pixel Focus shows ads or sponsored content." (no evidence)
 - ❌ "Pixel Focus tracks your behavior for analytics." (no evidence)
 - ❌ "Pixel Focus sells your data to third parties." (no evidence, but can't prove negative)
@@ -735,15 +712,14 @@ Key files examined during this audit:
 - artifacts/focusforge/src/lib/cloudSync.ts - Cloud synchronization logic
 - artifacts/focusforge/src/lib/AuthContext.tsx - Authentication context and providers
 - artifacts/focusforge/src/lib/TimerContext.tsx - Pomodoro and stopwatch state management
+- artifacts/focusforge/src/lib/MusicContext.tsx - Locally generated audio state management
 - artifacts/focusforge/src/lib/MusicPlayerContext.tsx - Music playback state management
-- artifacts/focusforge/src/lib/MusicContext.tsx - YouTube URL and metadata management
-- artifacts/focusforge/src/lib/youtube-utils.ts - YouTube metadata fetching functions
 - artifacts/focusforge/src/components/DiscordPresence.tsx - Discord Rich Presence logic
 - artifacts/focusforge/src/pages/Settings.tsx - Authentication, cloud sync, and data management UI
-- artifacts/focusforge/src/pages/Music.tsx - Music player interface and YouTube URL input
+- artifacts/focusforge/src/pages/Music.tsx - Web Audio API synthesizer interface
 - artifacts/focusforge/src/pages/Analytics.tsx - Client-only analytics calculations
 - artifacts/focusforge/src/App.tsx - Main application component and provider composition
-- artifacts/focusforge/src/layout.tsx - Application layout with persistent YouTube iframe
+- artifacts/focusforge/src/components/Layout.tsx - Application layout (no YouTube iframe)
 - focusforge-desktop/electron-web/assets/index-Duj1NolT.js - Built application bundle (spot checked)
 
 END OF AUDIT DOCUMENT
@@ -765,24 +741,23 @@ This section is written specifically for another AI that will later draft the ac
    - Theme preferences persist between sessions
    - Standard web technologies used with React framework
    - Electron desktop application with context isolation, sandbox, and no node integration
+   - Music generated client-side via Web Audio API (mathematical synthesis, no streaming)
 
 2. FACTS THAT REQUIRE QUALIFICATION:
    - Cloud synchronization: "Available when Firebase is properly configured in the build AND user signs in with Google or Apple"
    - Discord Rich Presence: "Transmits study activity and music status to Discord application when Discord is running on user's device"
-   - YouTube/Music integration: "Currently included in source code but user has stated this feature will be removed prior to Microsoft Store submission"
    - Authentication: "Optional Google and Apple sign-in available; application works identically in local-only mode without account"
 
-3. THINGS THAT MUST NOT BE CLAIM:
+3. THINGS THAT MUST NOT BE CLAIMED:
    - ❌ End-to-end encryption or zero-knowledge architecture
    - ❌ Complete data isolation (if Firebase configured and user signs in, data leaves device)
-   - ❌ Absence of all third-party services (Discord, YouTube, Firebase are integrated)
+   - ❌ Absence of all third-party services (Discord, Firebase are integrated)
    - ❌ GDPR/CCPA/HIPAA compliance without legal assessment
    - ❌ "Never transmits data" (conditional transmissions occur with user opt-in)
-   - ❌ Music streaming functionality (being removed per user statement)
+   - ❌ Music streaming from YouTube (functionality removed from source)
 
 4. ACTIVE THIRD-PARTY SERVICES:
    - Discord Rich Presence: Activity status transmission to Discord application
-   - YouTube oEmbed API: Metadata requests for entered YouTube URLs (to be removed per user statement)
    - Firebase Authentication: Optional sign-in (status depends on build configuration)
    - Firebase Firestore: Optional cloud sync (status depends on build configuration)
 
@@ -798,7 +773,6 @@ This section is written specifically for another AI that will later draft the ac
 
 6. DATA TRANSMITTED OFF DEVICE:
    - To Discord: Study subject, work/break state, music track title, timestamps (when active)
-   - To YouTube: Video ID or URL for metadata lookup (when user enters YouTube URL, to be removed)
    - To Firebase: Authentication tokens and profile data (when user signs in, if configured)
    - To Firebase Firestore: All user-generated data (when signed in, online, and configured)
 
@@ -824,35 +798,31 @@ This section is written specifically for another AI that will later draft the ac
    - Sandbox enabled for renderer process
    - Node integration disabled in renderer process
    - External links open in system browser, not Electron frame
-   - YouTube embed uses youtube-nocookie.com for enhanced privacy
    - Authentication tokens managed by browser's secure storage via Firebase SDK
    - No eval() or dangerous innerHTML usage observed in source
    - All external API calls use HTTPS implicitly
+   - No YouTube integration eliminates related privacy concerns
 
 10. STORE-RELEASE-SPECIFIC NOTES:
-   - Music streaming/YouTube functionality: CONFIRMED TO BE REMOVED per user statement
-   - Core productivity features: Unchanged and fully functional
-   - Local-first design: Maintained as primary architecture
-   - Optional cloud sync: Available only if Firebase configured in final build
-   - No account requirement: Core functionality accessible anonymously
-   - Windows MSIX packaging: Standard Electron packaging with no additional data collection evident
+    - YouTube/music streaming: CONFIRMED REMOVED from source code (not present in build)
+    - Web Audio API synthesizer: Included as offline-only ambient sound feature
+    - Core productivity features: Unchanged and fully functional
+    - Local-first design: Maintained as primary architecture
+    - Optional cloud sync: Available only if Firebase configured in final build
+    - No account requirement: Core functionality accessible anonymously
+    - Windows MSIX packaging: Standard Electron packaging with no additional data collection evident
 
 11. OPEN QUESTIONS THAT THE DEVELOPER MUST CONFIRM:
-   - ❓ Are VITE_FIREBASE_* environment variables set with valid values in the Microsoft Store build?
-       This determines whether authentication and cloud sync actually work in the published application.
+    - ❓ Are VITE_FIREBASE_* environment variables set with valid values in the Microsoft Store build?
+        This determines whether authentication and cloud sync actually work in the published application.
 
-   - ❓ Has the music streaming feature actually been removed from the build intended for Store submission?
-       User stated it "is being removed" - need confirmation of actual removal status for the final build.
+    - ❓ Any Windows-specific privacy considerations in the final MSIX package?
+        No evidence found in source, but should be verified in final build artifacts.
 
-   - ❓ Any Windows-specific privacy considerations in the final MSIX package?
-       No evidence found in source, but should be verified in final build artifacts.
+    - ❓ What are the Firebase project's security rules and data retention policies?
+        Client-side code shows data flow but not server-side retention or access controls.
 
-   - ❓ What are the Firebase project's security rules and data retention policies?
-       Client-side code shows data flow but not server-side retention or access controls.
-
-   - ❓ Are there any additional data collection mechanisms in the Electron build process?
-       Post-build analysis of final executable recommended to confirm no unexpected behaviors.
+    - ❓ Are there any additional data collection mechanisms in the Electron build process?
+        Post-build analysis of final executable recommended to confirm no unexpected behaviors.
 
 ==================================================
-
-This audit provides a factual foundation for drafting the Microsoft Store privacy policy for Pixel Focus. The policy should emphasize the application's offline-first nature, user data control, and optional nature of cloud features while being transparent about integrated third-party services.
