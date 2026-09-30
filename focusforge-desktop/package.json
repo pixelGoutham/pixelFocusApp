@@ -1,9 +1,10 @@
 {
   "name": "pixel-desktop",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "author": "Goutham Kumar A",
   "description": "Pixel Focus - The Ultimate App to Lock In",
   "main": "main.js",
+  "highresolutionavailable": true,
   "private": true,
   "scripts": {
     "build:win": "electron-builder --win",
