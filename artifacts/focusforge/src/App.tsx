@@ -25,6 +25,7 @@ import Settings from "@/pages/Settings";
 import Onboarding from "@/pages/Onboarding";
 import Music from "@/pages/Music";
 import Consistency from "@/pages/Consistency";
+import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 
 const queryClient = new QueryClient();
 
@@ -84,9 +85,20 @@ function AppInner() {
       }
     };
 
+    // Prevent Ctrl+click from opening new windows and Alt+click from saving/downloading
+    const handleClick = (e: MouseEvent) => {
+      if (e.ctrlKey || e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('click', handleClick, true); // Use capture phase to catch events early
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('click', handleClick, true);
     };
   }, [toggleFullscreen, isFullscreen]);
 
@@ -98,15 +110,17 @@ function AppInner() {
             <ThemeProvider>
               <TimerProvider>
                 <DiscordPresence />
-                {isElectron ? (
-                  <WouterRouter hook={useHashLocation}>
-                    <AppRouter />
-                  </WouterRouter>
-                ) : (
-                  <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                    <AppRouter />
-                  </WouterRouter>
-                )}
+                <MusicPlayerProvider>
+                  {isElectron ? (
+                    <WouterRouter hook={useHashLocation}>
+                      <AppRouter />
+                    </WouterRouter>
+                  ) : (
+                    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                      <AppRouter />
+                    </WouterRouter>
+                  )}
+                </MusicPlayerProvider>
               </TimerProvider>
             </ThemeProvider>
           </StoreProvider>
@@ -120,7 +134,9 @@ function AppInner() {
 function App() {
   return (
     <FullscreenProvider>
-      <AppInner />
+      <div className="min-h-screen w-full flex">
+        <AppInner />
+      </div>
     </FullscreenProvider>
   );
 }

@@ -11,7 +11,7 @@ PixelFocusApp is a productivity and focus application designed for students. It 
 - **Desktop**: Electron, electron-builder
 - **Backend**: Node.js, Express, Drizzle ORM, Firebase (for authentication and data sync)
 - **Database**: LocalForage (IndexedDB) for offline storage, with potential sync to Firebase
-- **Other**: Zod (schema validation), HookForm, Date-fns, Wouter (routing), clsx, class-variance-authority, discord-rpc, youtube-iFrame API
+- **Other**: Zod (schema validation), HookForm, Date-fns, Wouter (routing), clsx, class-variance-authority, discord-rpc
 
 ## Project Structure
 The project is a pnpm monorepo with the following key directories:
@@ -21,11 +21,11 @@ The project is a pnpm monorepo with the following key directories:
   /focusforge        - Main web application (React/Vite)
   /api-server        - Node.js/Express API server
   /mockup-sandbox    - Tool for creating/previewing UI mockups
-/lib
-  /api-client-react  - React hooks/components for API communication
-  /api-spec          - API specifications (OpenAPI/Swagger)
-  /api-zod           - Zod schemas for API validation
-  /db                - Database layer and Drizzle ORM schemas
+  /lib
+    /api-client-react  - React hooks/components for API communication
+    /api-spec          - API specifications (OpenAPI/Swagger)
+    /api-zod           - Zod schemas for API validation
+    /db                - Database layer and Drizzle ORM schemas
 /scripts             - Utility scripts (e.g., hello world example)
 /focusforge-desktop  - Electron wrapper for desktop builds
 /focusforge-desktop-linux - Linux-specific Electron build variant
@@ -44,7 +44,7 @@ The project is a pnpm monorepo with the following key directories:
 - Analytics - Productivity and usage statistics
 - Study Planner - Plan study sessions
 - Mock Tests - Practice tests or quizzes
-- Music - Music player with YouTube integration
+- Music - Music player with Web Audio API synthesizer
 - Consistency - Habit or streak tracking
 - Settings - Application preferences
 - Onboarding - Initial setup walkthrough
@@ -63,7 +63,7 @@ The core application built with React and Vite. It includes:
 - Comprehensive UI component library built with Radix UI and Tailwind CSS
 - Apple Design System implementation throughout the interface
 - Discord Rich Presence integration showing current pomodoro state and music listening
-- YouTube-integrated music player with background audio capabilities
+- Web Audio API music synthesizer for ambient sounds (white/brown/pink noise, rain, storm, etc.)
 
 ### artifacts/api-server
 A Node.js/Express server that provides API endpoints for the application. It uses:
@@ -119,7 +119,7 @@ Utility scripts for development tasks, currently containing a simple "hello" Typ
    - Theme-aware UI components
    - Subtle focus states replacing harsh outlines
    - Proper elevation and depth effects
-9. **YouTube Music Integration**: Headless YouTube player for background audio playback with search and metadata fetching capabilities.
+9. **Ambient Sound System**: Web Audio API music synthesizer for generating ambient sounds (white/brown/pink noise, rain, storm, etc.) entirely client-side.
 10. **Comprehensive Timer System**: Includes Pomodoro timer, stopwatch, and lap tracking with persistence.
 
 ## Build and Development
@@ -171,12 +171,20 @@ Utility scripts for development tasks, currently containing a simple "hello" Typ
   cd artifacts/focusforge && pnpm dev
   ```
 
-## Handoff Notes
-This project is a feature-rich productivity suite with a clean, modern UI. It is ready for further development or deployment. The monorepo structure allows for independent development of the web app, API, and shared libraries. The desktop wrapper provides a seamless offline experience.
-
-For any questions regarding the architecture or specific modules, refer to the source code and inline documentation.
-
 ## Recent Changes and Updates Log
+
+### September 30, 2026 - Privacy Audit and Music Functionality Update
+- Completed comprehensive privacy/data practices audit of entire codebase
+- Created PRIVACY_DATA_AUDIT.txt documenting all data flows and privacy practices
+- Confirmed YouTube music streaming functionality has been removed from source code
+- Music functionality now uses pure Web Audio API synthesizer for ambient sounds
+- No YouTube integration, iframe embedding, or metadata fetching exists in current build
+- All audio generated client-side using mathematical algorithms via Web Audio API
+
+### September 29, 2026 - Privacy Policy Creation
+- Created production-ready Privacy Policy for Pixel Focus Microsoft Store release
+- Based solely on verified application behavior with no invented data collection practices
+- Policy emphasizes offline-first nature, user data control, and optional cloud features
 
 ### September 29, 2026 - Logo Asset Reorganization
 - Reorganized all logo and image assets under a single `logo/` directory as the single source of truth.
@@ -204,6 +212,15 @@ For any questions regarding the architecture or specific modules, refer to the s
   - Removed "signAndEditExecutable": false from electron-builder config
 - **Dependencies**: Added "allowScripts" section to package.json to allow electron@33.4.11 scripts
 
+### September 30, 2026 - Version 2.2.2 Release
+- **Version Bump**: Updated package.json version from 2.2.1 to 2.2.2
+- **Privacy Documentation**:
+  - Updated PRIVACY_DATA_AUDIT.txt to confirm YouTube music streaming functionality removed from source code
+  - Music functionality now uses pure Web Audio API synthesizer for ambient sounds (no YouTube integration)
+  - Created PRIVACY_POLICY.md for Microsoft Store release based on verified application behavior
+- **Electron Updates**:
+  - Updated focusforge-desktop/package.json version to 2.2.2
+
 ### September 26, 2026
 - **Discord Integration**:
   - Added discord-rpc dependency to focusforge-desktop package.json
@@ -221,22 +238,21 @@ For any questions regarding the architecture or specific modules, refer to the s
   - Various minor import additions to Music.tsx and Pomodoro.tsx
 
 ### September 18, 2026
-- **Music Functionality Advancement**:
-  - Updated MusicPlayerContext.tsx to manage music state and YouTube player controls
-  - Created YouTubePlayer component for embedded YouTube video playback
-  - Created new Music.tsx page with UI for searching and playing music
-  - Implemented headless YouTube player that runs in background for audio-only playback
-  - Added URL input form for loading YouTube videos by ID or link
-  - Implemented track metadata fetching (title, thumbnail, duration)
-  - Created sticky bottom player with Apple-style translucent chrome
-  - Added lyrics placeholder section (future implementation)
-  - Added focus environments and local library sections (placeholders for future features)
-- **Code Cleanup**:
-  - Removed obsolete snap GUI configuration file
-- **Documentation Updates**:
-  - Updated focusforge-desktop/context.txt with recent changes
-  - Updated package.json, Layout.tsx, electron-web/index.html, and pnpm-lock.yaml for pre-build preparation
-  - Adjusted Layout.tsx for improved sidebar logo positioning
+- **Music Functionality Update (REVISED)**:
+  - Updated Music.tsx to use pure Web Audio API synthesizer for ambient sounds
+  - Removed all YouTube integration components and dependencies
+  - Created standalone ambient sound synthesizer with white/brown/pink noise, rain, storm, ocean, fire, cafe, wind sounds
+  - All audio generated client-side using AudioContext and mathematical algorithms
+  - No network dependency for music functionality
+  - Available as offline-only feature in Microsoft Store release
+- **UI Enhancements** (unchanged from original):
+  - Fixed Add Task modal z-index issue causing solid black background and blocked mouse interactions
+  - Updated UI components (Input, Textarea, Select) to replace yellow focus rings with Apple-compliant subtle focus states
+  - Increased DialogOverlay z-index from z-50 to z-60 to ensure proper stacking above floating mini-player
+  - Replaced focus-ring classes with Apple-style neutral focus states: focus-visible:outline-none focus-visible:bg-white focus-visible:border-zinc-400 with dark mode variants
+- **Music/Pomodoro Enhancements** (REVISED):
+  - Updated Music.tsx and Pomodoro.tsx to work with Web Audio API synthesizer only
+  - Removed YouTubePlayer component and related YouTube integration code
 
 ### September 17, 2026
 - **Binary File Cleanup**:
@@ -296,7 +312,10 @@ For any questions regarding the architecture or specific modules, refer to the s
 - **Button Animations**: Critically damped Framer Motion springs (bounce: 0, duration: 0.4)
 - **Overlay Positioning**: Removed fixed positioning overrides, let Radix UI handle natural anchor-based positioning
 - **Discord Rich Presence**: Shows pomodoro phase (focus/break/longBreak) and current music track
-- **YouTube Integration**: Headless player using iframe API, metadata fetching via youtubei.js inference
+- **Ambient Sound System**: Pure Web Audio API synthesizer generating sounds client-side using mathematical algorithms
+  - Sound types: white noise, brown noise, pink noise, rain, storm, ocean, fire, cafe, wind
+  - All audio generated via AudioContext, AudioBufferSourceNode, GainNode, and filters
+  - Zero network dependency - works completely offline
 - **Apple-Inspired Focus Styles**:
   - Light mode: White background with zinc-400 border
   - Dark mode: Semi-transparent white background ([0.08]) and border ([0.3]) with smooth transitions
@@ -316,7 +335,7 @@ For any questions regarding the architecture or specific modules, refer to the s
 - [ ] Input fields show proper focus states and theme-adaptive colors
 - [ ] Buttons have appropriate size, spacing, and interaction feedback
 - [ ] Discord Rich Presence shows current activity (pomodoro state, music)
-- [ ] YouTube music player loads and plays audio in background
+- [ ] Ambient sound player loads and plays audio completely offline
 - [ ] Swipe-to-delete works in task list with proper velocity sensitivity
 - [ ] All dialogs and modals animate with Apple-style spring animations
 - [ ] Pomodoro timer shows circular progress with phase-appropriate colors
@@ -359,4 +378,4 @@ For any questions regarding the architecture or specific modules, refer to the s
 - **Offline-First**: 100% functional without internet; all data stored locally via IndexedDB
 
 ---
-*This document was last updated on September 27, 2026 to reflect the current state of the PixelFocusApp project, including all recent features, improvements, and technical changes.*
+*This document was last updated on September 30, 2026 to reflect the current state of the PixelFocusApp project, including all recent features, improvements, and technical changes.*
