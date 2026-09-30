@@ -12,16 +12,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 import { useDraggable } from "@/hooks/use-draggable";
 import type { Task } from "@/lib/store";
 
-function DraggableTask({ task, toggleTask, deleteTask, openEdit, getSubjectColor }: {
+function DraggableTask({ task, toggleTask, deleteTask, openEdit, getSubjectColorByName }: {
   task: Task;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
   openEdit: (task: Task) => void;
-  getSubjectColor: (subject: string) => string;
+  getSubjectColorByName: (subjectName: string, subjects: {name: string; color: string}[]) => string;
 }) {
   const [ref, style, setStyle] = useDraggable({
     boundary: { left: -200, right: 0 },
@@ -63,7 +63,7 @@ function DraggableTask({ task, toggleTask, deleteTask, openEdit, getSubjectColor
         <p className={cn("text-sm font-medium truncate", task.completed && "line-through")}>{task.task}</p>
         <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}–{task.endTime}</p>
       </div>
-      <Badge variant="outline" className={cn("text-xs border hidden sm:flex", getSubjectColor(task.subject))}>{task.subject}</Badge>
+      <Badge variant="outline" className="text-xs border hidden sm:flex" style={{ backgroundColor: getSubjectColorByName(task.subject) }}>{task.subject}</Badge>
                           {task.pomodoroSessions > 0 && (
         <span className="flex items-center gap-0.5 text-xs text-amber-400 hidden md:flex">
           <Flame className="h-3 w-3" />{task.pomodoroSessions}
@@ -93,7 +93,7 @@ const EMPTY_FORM = {
 };
 
 export default function Tasks() {
-  const { tasks, setTasks } = useStore();
+  const { tasks, setTasks, settings } = useStore();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
@@ -123,7 +123,7 @@ export default function Tasks() {
     };
   }, [dialogOpen]);
 
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const subjects = settings.subjects ?? [];
 
   const filtered = useMemo(() => tasks.filter(t => {
     if (filterSubject !== "all" && t.subject !== filterSubject) return false;
@@ -177,7 +177,7 @@ export default function Tasks() {
           <SelectTrigger className="w-36" data-testid="filter-subject"><SelectValue placeholder="Subject" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {subjects.map(s => <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>)}
           </SelectContent>
         </Select>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -207,11 +207,12 @@ export default function Tasks() {
             <div className="divide-y divide-border">
               {filtered.map(task => (
               <DraggableTask
+                key={task.id}
                 task={task}
                 toggleTask={toggleTask}
                 deleteTask={deleteTask}
                 openEdit={openEdit}
-                getSubjectColor={getSubjectColor}
+                getSubjectColorByName={(subjectName) => getSubjectColorByName(subjectName, settings.subjects)}
               />
             ))}
             </div>
@@ -233,7 +234,7 @@ export default function Tasks() {
               <div>
                   <Label>Subject</Label>
                   <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-dl" placeholder="Subject" />
-                  <datalist id="subjects-dl">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+                  <datalist id="subjects-dl">{subjects.map(s => <option key={s.name} value={s.name} />)}</datalist>
                 </div>
               <div className="space-y-4">
       <div className="bg-white/[0.03] dark:bg-white/[0.05] rounded-lg p-4">

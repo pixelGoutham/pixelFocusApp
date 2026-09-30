@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 import type { Task } from "@/lib/store";
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
@@ -37,7 +37,7 @@ function priorityToQuadrant(p: string): Task["quadrant"] {
 }
 
 export default function Calendar() {
-  const { tasks, setTasks } = useStore();
+  const { tasks, setTasks, settings } = useStore();
   const { toast } = useToast();
   const [weekOffset, setWeekOffset] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function Calendar() {
   const weekStart = startOfWeek(addDays(new Date(), weekOffset * 7), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const subjects = settings.subjects ?? [];
 
   const handleSlotClick = (dayStr: string, hour: number) => {
     setSelectedDate(dayStr);
@@ -207,16 +207,16 @@ export default function Calendar() {
                   {/* Task blocks */}
                   {dayTasks.map(task => {
                     const style = getTaskStyle(task);
+                    const subjectColor = getSubjectColorByName(task.subject, settings.subjects);
                     return (
                       <div
                         key={task.id}
                         data-testid={`cal-task-${task.id}`}
                         className={cn(
                           "absolute left-0.5 right-0.5 rounded px-1.5 py-0.5 overflow-hidden cursor-pointer border transition-opacity",
-                          task.completed ? "opacity-40" : "opacity-100",
-                          getSubjectColor(task.subject)
+                          task.completed ? "opacity-40" : "opacity-100"
                         )}
-                        style={style}
+                        style={{ ...style, backgroundColor: subjectColor }}
                         title={task.task}
                       >
                         <p className="text-xs font-medium truncate leading-tight">{task.task}</p>
@@ -248,7 +248,7 @@ export default function Calendar() {
             <div>
               <Label>Subject</Label>
               <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-cal" placeholder="e.g. Physics" />
-              <datalist id="subjects-cal">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+              <datalist id="subjects-cal">{subjects.map(s => <option key={s.name} value={s.name} />)}</datalist>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Start Time</Label><Input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} /></div>
@@ -311,7 +311,7 @@ export default function Calendar() {
                     <td className="px-3 py-1.5 font-mono">{row.Date}</td>
                     <td className="px-3 py-1.5 font-mono">{row.Start}</td>
                     <td className="px-3 py-1.5 font-mono">{row.End}</td>
-                    <td className="px-3 py-1.5"><Badge variant="outline" className={cn("text-xs border", getSubjectColor(row.Subject))}>{row.Subject}</Badge></td>
+                    <td className="px-3 py-1.5"><Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(row.Subject, settings.subjects) }}>{row.Subject}</Badge></td>
                     <td className="px-3 py-1.5 max-w-48 truncate">{row.Task}</td>
                     <td className="px-3 py-1.5">{row.Priority}</td>
                   </tr>

@@ -10,25 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const SUBJECT_COLORS: Record<string, string> = {};
-const PALETTE = [
-  "bg-violet-500/20 text-violet-400 border-violet-500/30",
-  "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  "bg-rose-500/20 text-rose-400 border-rose-500/30",
-  "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  "bg-pink-500/20 text-pink-400 border-pink-500/30",
-];
-
-export function getSubjectColor(subject: string): string {
-  if (!SUBJECT_COLORS[subject]) {
-    const keys = Object.keys(SUBJECT_COLORS);
-    SUBJECT_COLORS[subject] = PALETTE[keys.length % PALETTE.length];
-  }
-  return SUBJECT_COLORS[subject];
-}
+import { getSubjectColorByName } from "@/lib/utils";
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub?: string }) {
   return (
@@ -171,7 +153,7 @@ export default function Dashboard() {
                     <p className={cn("text-sm font-medium truncate", task.completed && "line-through text-muted-foreground")}>{task.task}</p>
                     <p className="text-xs text-muted-foreground">{task.startTime} – {task.endTime}</p>
                   </div>
-                  <Badge variant="outline" className={cn("text-xs border", getSubjectColor(task.subject))}>
+                  <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>
                     {task.subject}
                   </Badge>
                 </div>
@@ -258,7 +240,9 @@ export default function Dashboard() {
                   <p className="text-sm font-medium truncate">{task.task}</p>
                   <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}</p>
                 </div>
-                <Badge variant="outline" className={cn("text-xs border", getSubjectColor(task.subject))}>{task.subject}</Badge>
+                <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>
+                    {task.subject}
+                </Badge>
               </div>
             ))}
           </CardContent>

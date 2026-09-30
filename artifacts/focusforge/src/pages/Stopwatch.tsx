@@ -8,7 +8,7 @@ import { useStore } from "@/lib/StoreContext";
 import { useTimer } from "@/lib/TimerContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 
 function fmt(ms: number): string {
   const h = Math.floor(ms / 3600000);
@@ -20,11 +20,11 @@ function fmt(ms: number): string {
 }
 
 export default function Stopwatch() {
-  const { tasks, sessions, setSessions } = useStore();
+  const { tasks, sessions, setSessions, settings } = useStore();
   const { sw, swElapsed, updateSw, startSw, pauseSw, resetSw } = useTimer();
   const { toast } = useToast();
 
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const subjects = settings.subjects ?? [];
   const laps = sw.laps;
 
   const handleStartStop = () => {
@@ -82,7 +82,7 @@ export default function Stopwatch() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="General">General</SelectItem>
-              {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {subjects.map(s => <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -96,7 +96,7 @@ export default function Stopwatch() {
               {fmt(swElapsed)}
             </div>
             {sw.selectedSubject && (
-              <Badge variant="outline" className={cn("mt-2 text-xs border", getSubjectColor(sw.selectedSubject))}>
+              <Badge variant="outline" className="mt-2 text-xs border" style={{ backgroundColor: getSubjectColorByName(sw.selectedSubject, settings.subjects) }}>
                 {sw.selectedSubject}
               </Badge>
             )}

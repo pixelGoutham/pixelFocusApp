@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 import type { Task } from "@/lib/store";
 
 type Quadrant = Task["quadrant"];
@@ -25,12 +25,12 @@ const QUADRANTS: { key: Quadrant; label: string; sub: string; color: string; acc
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
 export default function Matrix() {
-  const { tasks, setTasks } = useStore();
+  const { tasks, setTasks, settings } = useStore();
   const { toast } = useToast();
   const [addingTo, setAddingTo] = useState<Quadrant | null>(null);
   const [form, setForm] = useState({ task: "", subject: "", date: format(new Date(), "yyyy-MM-dd"), priority: "Medium" as Task["priority"] });
 
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const subjects = settings.subjects ?? [];
   const incomplete = tasks.filter(t => !t.completed);
 
   const handleAdd = () => {
@@ -120,7 +120,7 @@ export default function Matrix() {
                     </div>
                   </div>
                   <div className="mt-2">
-                    <Badge variant="outline" className={cn("text-xs border", getSubjectColor(task.subject))}>{task.subject}</Badge>
+                    <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>{task.subject}</Badge>
                   </div>
                 </div>
               ))}
@@ -145,7 +145,7 @@ export default function Matrix() {
                 <SelectTrigger><SelectValue placeholder="Subject" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="General">General</SelectItem>
-                  {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {subjects.map(s => <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -13,7 +13,7 @@ import { useStore } from "@/lib/StoreContext";
 import { useTimer, PomodoroPhase } from "@/lib/TimerContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 import { useState } from "react";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -50,7 +50,7 @@ export default function Pomodoro() {
   };
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const subjects = Array.from(new Set(tasks.map(t => t.subject))).filter(Boolean);
+  const subjects = settings.subjects ?? [];
   const todayTasks = tasks.filter(t => t.subject === pom.selectedSubject && !t.completed);
   const todaySessions = sessions.filter(s => s.date === todayStr && s.type === "pomodoro");
 
@@ -205,7 +205,15 @@ export default function Pomodoro() {
                     resolvedTheme === 'dark' ? "text-white" : "text-black"
                   )}>{mm}:{ss}</span>
                   <span className="text-sm text-muted-foreground mt-1">{phaseLabel}</span>
-                  {pom.selectedSubject && <span className="text-xs text-primary mt-1">{pom.selectedSubject}</span>}
+                  {pom.selectedSubject && (
+  <span className="text-xs text-primary mt-1">
+    {/* Find color from subject name */}
+    {settings.subjects?.find(s => s.name === pom.selectedSubject)?.color && (
+      <span className="block h-2 w-2 rounded-full" style={{ background: settings.subjects.find(s => s.name === pom.selectedSubject)?.color }} />
+    )}
+    {pom.selectedSubject}
+  </span>
+)}
                 </div>
               </div>
 
@@ -290,7 +298,14 @@ export default function Pomodoro() {
               >
                 <SelectTrigger data-testid="select-subject"><SelectValue placeholder="Select subject" /></SelectTrigger>
                 <SelectContent>
-                  {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {subjects.map(s => (
+    <SelectItem key={s.name} value={s.name}>
+      <div className="flex items-center gap-2">
+        <div className="h-3 w-3 rounded-full" style={{ background: s.color }} />
+        <span>{s.name}</span>
+      </div>
+    </SelectItem>
+  ))}
                 </SelectContent>
               </Select>
               {pom.selectedSubject && (
@@ -318,9 +333,10 @@ export default function Pomodoro() {
               ) : todaySessions.map((s, i) => (
                 <div key={s.id} className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground w-4">#{i + 1}</span>
-                  <Badge variant="outline" className={cn("text-xs border", getSubjectColor(s.subject),
+                  <Badge variant="outline" className={cn(
+                    "text-xs border",
                     resolvedTheme === 'dark' ? "!border-white/20 !bg-white/5 !text-white" : "!border-black/20 !bg-black/5 !text-black"
-                  )}>{s.subject}</Badge>
+                  )} style={{ backgroundColor: getSubjectColorByName(s.subject, settings.subjects) }}>{s.subject}</Badge>
                   <span className="text-muted-foreground ml-auto">{s.durationMinutes}m</span>
                 </div>
               ))}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "@/lib/ThemeContext";
-import { Clock, Plus, Trash2, BookOpen, ChevronRight, Check } from "lucide-react";
+import { Clock, Plus, Trash2, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,15 +9,12 @@ import { useAuth } from "@/lib/AuthContext";
 import { Subject } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, addDays } from "date-fns";
 
 const PALETTE = [
   "#7C3AED", "#3B82F6", "#06B6D4", "#22C55E",
   "#F59E0B", "#EF4444", "#EC4899", "#F97316",
   "#8B5CF6", "#14B8A6", "#84CC16", "#F43F5E",
 ];
-
-const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const variants = {
   enter: (dir: number) => ({ x: dir * 60, opacity: 0 }),
@@ -33,7 +30,7 @@ export default function Onboarding() {
   const [dir, setDir] = useState(1);
   const { resolvedTheme } = useTheme();
 
-  // Step 1 — pre-fill from auth if available
+  // Step 1
   const [name, setName] = useState(() => user?.displayName ?? "");
   const [goal, setGoal] = useState(480);
 
@@ -41,9 +38,6 @@ export default function Onboarding() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedColor, setSelectedColor] = useState(PALETTE[0]);
   const [newSubject, setNewSubject] = useState("");
-
-  // Step 3 — plan[subjectName][dayShort] = hours
-  const [plan, setPlan] = useState<Record<string, Record<string, number>>>({});
 
   const goTo = (next: number) => {
     setDir(next > step ? 1 : -1);
@@ -62,42 +56,17 @@ export default function Onboarding() {
 
   const removeSubject = (name: string) => {
     setSubjects(prev => prev.filter(s => s.name !== name));
-    setPlan(prev => {
-      const next = { ...prev };
-      delete next[name];
-      return next;
-    });
-  };
-
-  const setCell = (subject: string, day: string, val: number) => {
-    setPlan(prev => ({
-      ...prev,
-      [subject]: { ...(prev[subject] ?? {}), [day]: val },
-    }));
   };
 
   const handleFinish = () => {
     if (!name.trim()) return;
-
-    // Convert day-name keys → current-week date keys for the planner
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const datePlan: Record<string, Record<string, number>> = {};
-    for (const [subj, dayMap] of Object.entries(plan)) {
-      datePlan[subj] = {};
-      DAYS_SHORT.forEach((day, i) => {
-        const hrs = dayMap[day];
-        if (hrs && hrs > 0) {
-          datePlan[subj][format(addDays(weekStart, i), "yyyy-MM-dd")] = hrs;
-        }
-      });
-    }
 
     setSettings({
       ...settings,
       userName: name.trim(),
       dailyGoalMinutes: goal,
       subjects,
-      studyPlan: datePlan,
+      studyPlan: {}, // Initialized empty so the planner doesn't break
       onboardingDone: true,
     });
   };
@@ -106,9 +75,9 @@ export default function Onboarding() {
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-xl">
 
-        {/* Progress dots */}
+        {/* Progress dots - Reduced to 2 steps */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2, 3].map(i => (
+          {[1, 2].map(i => (
             <div
               key={i}
               className={cn(
@@ -230,7 +199,6 @@ export default function Onboarding() {
                 </div>
 
                 <div className="space-y-5">
-                  {/* Add subject row */}
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-1.5">
                       {PALETTE.map(c => (
@@ -264,7 +232,6 @@ export default function Onboarding() {
                     </div>
                   </div>
 
-                  {/* Subject chips */}
                   <div className="min-h-16">
                     {subjects.length === 0 ? (
                       <div className="flex items-center justify-center h-16 border border-dashed border-border rounded-lg">
@@ -297,97 +264,15 @@ export default function Onboarding() {
                     <Button variant="ghost" className="flex-1" onClick={() => goTo(1)}>
                       Back
                     </Button>
+                    {/* Finished button moved here from the old step 3 */}
                     <Button
                       className="flex-1 gap-2 font-semibold"
-                      onClick={() => goTo(3)}
+                      onClick={handleFinish}
                     >
-                      {subjects.length === 0 ? "Skip for now" : "Next"}
-                      <ChevronRight className="h-4 w-4" />
+                      <Check className="h-4 w-4" />
+                      Get Started
                     </Button>
                   </div>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                custom={dir}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="p-8 md:p-10"
-              >
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold tracking-tight">Plan your typical week</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    How many hours per subject per day? You can fine-tune this anytime in Study Planner.
-                  </p>
-                </div>
-
-                {subjects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3 border border-dashed border-border rounded-xl mb-6">
-                    <BookOpen className="h-10 w-10 text-muted-foreground/30" />
-                    <p className="text-sm text-muted-foreground">No subjects added — you can plan later.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto rounded-xl border border-border mb-6">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                          <th className="text-left py-2.5 px-3 text-xs font-semibold text-muted-foreground w-28">Subject</th>
-                          {DAYS_SHORT.map(d => (
-                            <th key={d} className="text-center py-2.5 px-1 text-xs font-semibold text-muted-foreground min-w-[50px]">{d}</th>
-                          ))}
-                          <th className="text-center py-2.5 px-2 text-xs font-semibold text-primary">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subjects.map((s, si) => {
-                          const rowTotal = DAYS_SHORT.reduce((a, d) => a + (plan[s.name]?.[d] ?? 0), 0);
-                          return (
-                            <tr key={s.name} className={cn("border-b border-border last:border-b-0", si % 2 === 0 ? "" : "bg-muted/10")}>
-                              <td className="py-2 px-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                                  <span className="font-medium text-xs truncate max-w-[80px]">{s.name}</span>
-                                </div>
-                              </td>
-                              {DAYS_SHORT.map(day => (
-                                <td key={day} className="py-1 px-0.5 text-center">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={12}
-                                    step={0.5}
-                                    value={plan[s.name]?.[day] || ""}
-                                    onChange={e => setCell(s.name, day, Number(e.target.value))}
-                                    className="w-11 h-8 text-center text-xs bg-muted border border-border rounded-md focus:outline-none focus:border-primary tabular-nums"
-                                    placeholder="0"
-                                  />
-                                </td>
-                              ))}
-                              <td className="py-2 px-2 text-center font-mono font-bold text-xs text-primary">
-                                {rowTotal > 0 ? rowTotal.toFixed(1) + "h" : <span className="text-muted-foreground/40">—</span>}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <Button variant="ghost" className="flex-1" onClick={() => goTo(2)}>
-                    Back
-                  </Button>
-                  <Button className="flex-1 gap-2 font-semibold h-11" onClick={handleFinish}>
-                    <Check className="h-4 w-4" />
-                    Get Started
-                  </Button>
                 </div>
               </motion.div>
             )}

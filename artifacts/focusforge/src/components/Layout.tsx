@@ -108,7 +108,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  React.useEffect(() => { setIsMobileOpen(false); setFsSidebarOpen(false); }, [location]);
+  // Removed setFsSidebarOpen(false) here so the sidebar stays open when navigating in fullscreen
+  React.useEffect(() => { setIsMobileOpen(false); }, [location]);
 
   const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
 

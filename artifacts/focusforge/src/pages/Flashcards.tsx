@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { getSubjectColor } from "./Dashboard";
+import { getSubjectColorByName } from "@/lib/utils";
 import { format, addDays } from "date-fns";
 import type { Flashcard } from "@/lib/store";
 
@@ -22,7 +22,7 @@ function uid() { return Math.random().toString(36).slice(2) + Date.now().toStrin
 const DIFF_DAYS: Record<Flashcard["difficulty"], number> = { easy: 7, medium: 3, hard: 1 };
 
 export default function Flashcards() {
-  const { flashcards, setFlashcards, tasks } = useStore();
+  const { flashcards, setFlashcards, tasks, settings } = useStore();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ front: "", back: "", subject: "" });
@@ -31,7 +31,10 @@ export default function Flashcards() {
   const [flipped, setFlipped] = useState(false);
   const [reviewDone, setReviewDone] = useState(false);
 
-  const subjects = Array.from(new Set([...tasks.map(t => t.subject), ...flashcards.map(f => f.subject)])).filter(Boolean);
+  const subjectsFromSettings = settings.subjects ?? [];
+const subjectsFromTasksAndFlashcards = Array.from(new Set([...tasks.map(t => t.subject), ...flashcards.map(f => f.subject)])).filter(Boolean);
+// Combine settings subjects with any from tasks/flashcards for backward compatibility
+const subjects = [...subjectsFromSettings, ...subjectsFromTasksAndFlashcards.filter(s => !subjectsFromSettings.some(ss => ss.name === s))];
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const dueCards = flashcards.filter(f => f.nextReview <= todayStr);
@@ -155,7 +158,7 @@ export default function Flashcards() {
               </div>
 
               {/* Subject badge */}
-              <Badge variant="outline" className={cn("text-xs border", getSubjectColor(currentCard.subject))}>
+              <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(currentCard.subject, settings.subjects) }}>
                 {currentCard.subject}
               </Badge>
 
@@ -187,7 +190,7 @@ export default function Flashcards() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Subjects</SelectItem>
-              {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {subjects.map(s => <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -211,7 +214,7 @@ export default function Flashcards() {
                       </button>
                     </div>
                     <div className="flex items-center gap-2 mt-3">
-                      <Badge variant="outline" className={cn("text-xs border", getSubjectColor(card.subject))}>{card.subject}</Badge>
+                      <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(card.subject, settings.subjects) }}>{card.subject}</Badge>
                       <span className={cn("text-xs", card.difficulty === "easy" ? "text-emerald-400" : card.difficulty === "medium" ? "text-amber-400" : "text-rose-400")}>
                         {card.difficulty}
                       </span>
@@ -237,7 +240,7 @@ export default function Flashcards() {
             <div>
               <Label>Subject</Label>
               <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} list="subjects-fc" placeholder="Subject" />
-              <datalist id="subjects-fc">{subjects.map(s => <option key={s} value={s} />)}</datalist>
+              <datalist id="subjects-fc">{subjects.map(s => <option key={s.name} value={s.name} />)}</datalist>
             </div>
             <Button className="w-full" onClick={handleAdd} data-testid="button-save-card">Add Card</Button>
           </div>
