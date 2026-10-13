@@ -21,4 +21,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Discord Rich Presence
   setDiscordActivity: (activity) => ipcRenderer.send('set-discord-activity', activity),
   clearDiscordActivity: () => ipcRenderer.send('clear-discord-activity'),
+  // Pixel Flow AI task extraction
+  proposeTasks: (text) => ipcRenderer.invoke('pixel-flow:propose', text),
+  // Hide capture window
+  hideCaptureWindow: () => ipcRenderer.send('hide-capture-window')
 });

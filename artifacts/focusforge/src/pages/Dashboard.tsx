@@ -2,13 +2,15 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { format, isToday, parseISO, startOfWeek, addDays } from "date-fns";
 import { useStore } from "@/lib/StoreContext";
-import { Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp } from "@phosphor-icons/react";
+import { Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp, Sparkle } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import PixelFlowCapture from "@/components/ui/PixelFlowCapture";
 
 import { getSubjectColorByName } from "@/lib/utils";
 
@@ -94,21 +96,59 @@ export default function Dashboard() {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
+  const [isCaptureOpen, setIsCaptureOpen] = useState(false);
+
+  // Handle Ctrl+K or Cmd+K to toggle Pixel Flow capture
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCaptureOpen(!isCaptureOpen);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Greeting */}
+    <>
+      {/* Greeting with Pixel Flow button */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">{greeting}, {settings.userName}</h2>
           <p className="text-muted-foreground text-sm mt-0.5">{format(new Date(), "EEEE, d MMMM yyyy")} — Stay focused. Your future is built daily.</p>
         </div>
-        <Link href="/pomodoro">
-          <Button data-testid="button-start-focus" size="sm" className="gap-2 bg-primary text-primary-foreground shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.2)]">
-            <Timer className="h-4 w-4 text-primary-foreground" />
-            Start Focus Session
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/pomodoro">
+            <Button data-testid="button-start-focus" size="sm" className="gap-2 bg-primary text-primary-foreground shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.2)]">
+              <Timer className="h-4 w-4 text-primary-foreground" />
+              Start Focus Session
+            </Button>
+          </Link>
+          {/* Apple Design enhanced button with press feedback */}
+          <motion.button
+            onClick={() => setIsCaptureOpen(true)}
+            whileTap={{ scale: 0.95 }}
+            hoverCursor="pointer"
+            className="gap-2 bg-zinc-900 hover:bg-zinc-800 text-white transition-transform duration-200"
+          >
+            <Sparkle className="h-4 w-4" />
+            Pixel Flow
+          </motion.button>
+        </div>
       </motion.div>
+
+      {/* Pixel Flow Modal */}
+      {isCaptureOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="relative w-[400px] max-w-[90vh]">
+            <PixelFlowCapture onClose={() => setIsCaptureOpen(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -241,13 +281,14 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}</p>
                 </div>
                 <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>
-                    {task.subject}
+                  {task.subject}
                 </Badge>
               </div>
-            ))}
+            ))
+          }
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   );
 }

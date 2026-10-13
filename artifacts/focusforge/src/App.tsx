@@ -25,6 +25,7 @@ import Settings from "@/pages/Settings";
 import Onboarding from "@/pages/Onboarding";
 import Music from "@/pages/Music";
 import Consistency from "@/pages/Consistency";
+import QuickCapture from "@/pages/QuickCapture";
 import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 
 const queryClient = new QueryClient();
@@ -48,23 +49,27 @@ function AppRouter() {
   }
 
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/calendar" component={Calendar} />
-        <Route path="/tasks" component={Tasks} />
-        <Route path="/matrix" component={Matrix} />
-        <Route path="/pomodoro" component={Pomodoro} />
-        <Route path="/stopwatch" component={Stopwatch} />
-        <Route path="/analytics" component={Analytics} />
-        <Route path="/study-planner" component={StudyPlanner} />
-        <Route path="/mock-tests" component={MockTests} />
-        <Route path="/music" component={Music} />
-        <Route path="/consistency" component={Consistency} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <>
+      {/* QuickCapture route - outside Layout for Electron window */}
+      <Route path="/quick-capture" component={QuickCapture} />
+
+      {/* Main app routes - inside Layout */}
+      <Layout>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/calendar" component={Calendar} />
+          <Route path="/tasks" component={Tasks} />
+          <Route path="/matrix" component={Matrix} />
+          <Route path="/pomodoro" component={Pomodoro} />
+          <Route path="/stopwatch" component={Stopwatch} />
+          <Route path="/analytics" component={Analytics} />
+          <Route path="/study-planner" component={StudyPlanner} />
+          <Route path="/mock-tests" component={MockTests} />
+          <Route path="/settings" component={Settings} />
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    </>
   );
 }
 
