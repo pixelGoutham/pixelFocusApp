@@ -61,3 +61,5 @@ brag-output
 .env
 .env.local
 *.env
+
+offline/
