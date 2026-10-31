@@ -1,6 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
-import { useEffect } from "react";
+import { use, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +27,7 @@ import Music from "@/pages/Music";
 import Consistency from "@/pages/Consistency";
 import QuickCapture from "@/pages/QuickCapture";
 import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
+import { ShortcutsProvider } from "./lib/ShortcutsContext";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,8 @@ function AppRouter() {
           <Route path="/calendar" component={Calendar} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/matrix" component={Matrix} />
+          <Route path='/music' component={Music} />
+          <Route path='/consistency' component={Consistency} />
           <Route path="/pomodoro" component={Pomodoro} />
           <Route path="/stopwatch" component={Stopwatch} />
           <Route path="/analytics" component={Analytics} />
@@ -75,22 +78,10 @@ function AppRouter() {
 
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 
-function AppInner() {
-  const { toggleFullscreen, isFullscreen } = useFullscreen();
+function AppContent() {
+  const {toggleFullscreen, isFullscreen } = useFullscreen();
 
-  // Global keyboard listener for F11 and Escape
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F11') {
-        e.preventDefault();
-        toggleFullscreen();
-      } else if (e.key === 'Escape' && isFullscreen) {
-        // Only handle Escape if we're in fullscreen (to avoid interfering with modals, etc.)
-        toggleFullscreen();
-      }
-    };
-
-    // Prevent Ctrl+click from opening new windows and Alt+click from saving/downloading
     const handleClick = (e: MouseEvent) => {
       if (e.ctrlKey || e.altKey) {
         e.preventDefault();
@@ -98,38 +89,41 @@ function AppInner() {
         return false;
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('click', handleClick, true); // Use capture phase to catch events early
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('click', handleClick, true);
-    };
-  }, [toggleFullscreen, isFullscreen]);
-
+    window.addEventListener('click', handleClick, true);
+    return () => window.removeEventListener('click', handleClick, true);
+  }, []);
+  return isElectron ? (
+  <WouterRouter hook={useHashLocation}>
+    <AppRouter />
+  </WouterRouter>
+) : (
+  <WouterRouter
+    base={import.meta.env.BASE_URL.replace(/\/$/, "")}
+  >
+    <AppRouter />
+  </WouterRouter>
+);
+}
+function AppInner() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <StoreProvider>
-            <ThemeProvider>
-              <TimerProvider>
-                <DiscordPresence />
+        <ShortcutsProvider>
+          <AuthProvider>
+            <StoreProvider>
+              <FullscreenProvider>
+                <ThemeProvider>
+                  <TimerProvider>
+                    <DiscordPresence />
                 <MusicPlayerProvider>
-                  {isElectron ? (
-                    <WouterRouter hook={useHashLocation}>
-                      <AppRouter />
-                    </WouterRouter>
-                  ) : (
-                    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                      <AppRouter />
-                    </WouterRouter>
-                  )}
+                  <AppContent />
                 </MusicPlayerProvider>
-              </TimerProvider>
+             </TimerProvider>
             </ThemeProvider>
-          </StoreProvider>
-        </AuthProvider>
+           </FullscreenProvider>
+         </StoreProvider>
+       </AuthProvider>
+       </ShortcutsProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
@@ -138,11 +132,7 @@ function AppInner() {
 
 function App() {
   return (
-    <FullscreenProvider>
-      <div className="min-h-screen w-full flex">
-        <AppInner />
-      </div>
-    </FullscreenProvider>
+    <AppInner />
   );
 }
 

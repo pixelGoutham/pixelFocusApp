@@ -135,18 +135,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         animate={
           isMobile
             ? { x: isMobileOpen ? 0 : -SIDEBAR_EXPANDED, width: SIDEBAR_EXPANDED }
-            : { 
-                width: (isFullscreen && !fsSidebarOpen) ? 0 : sidebarW, 
-                opacity: (isFullscreen && !fsSidebarOpen) ? 0 : 1, 
-                x: (isFullscreen && !fsSidebarOpen) ? -30 : 0 
-              }
+            : {
+              width: (isFullscreen && !fsSidebarOpen) ? 0 : sidebarW,
+              opacity: (isFullscreen && !fsSidebarOpen) ? 0 : 1,
+              x: (isFullscreen && !fsSidebarOpen) ? -30 : 0
+            }
         }
-        transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.35}}
         className={cn(
           'flex flex-col z-40 flex-shrink-0 border-r border-sidebar-border bg-sidebar/90 backdrop-blur-lg overflow-hidden',
           isMobile && 'fixed inset-y-0 left-0'
         )}
-        aria-hidden={sidebarW === 0 || (isFullscreen && !fsSidebarOpen) ? 'true' : undefined}
+        aria-hidden={( sidebarW === 0 || (isFullscreen && !fsSidebarOpen)) ? 'true' : undefined}
+        inert={sidebarW === 0 || (isFullscreen && !fsSidebarOpen)}
         style={{ pointerEvents: (sidebarW === 0 || (isFullscreen && !fsSidebarOpen)) ? 'none' : 'auto' }}
       >
         {/* Logo */}

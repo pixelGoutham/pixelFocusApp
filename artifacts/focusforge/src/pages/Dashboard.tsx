@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link } from "wouter";
 import { format, isToday, parseISO, startOfWeek, addDays } from "date-fns";
 import { useStore } from "@/lib/StoreContext";
+import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcuts";
 import { Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp, Sparkle } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -95,24 +96,12 @@ export default function Dashboard() {
   const toggleTask = (id: string) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
+  const toggleCapture = useCallback(() => setIsCaptureOpen(prev => !prev), []);
 
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
-
-  // Handle Ctrl+K or Cmd+K to toggle Pixel Flow capture
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsCaptureOpen(!isCaptureOpen);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
+  useKeyboardShortcut(['ctrl', 'k'], () => {
+    toggleCapture();
+  }, {description: 'Open Pixel Flow capture', id: 'pixel-flow-capture'});
   return (
     <>
       {/* Greeting with Pixel Flow button */}
@@ -132,7 +121,6 @@ export default function Dashboard() {
           <motion.button
             onClick={() => setIsCaptureOpen(true)}
             whileTap={{ scale: 0.95 }}
-            hoverCursor="pointer"
             className="gap-2 bg-zinc-900 hover:bg-zinc-800 text-white transition-transform duration-200"
           >
             <Sparkle className="h-4 w-4" />

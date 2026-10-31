@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-
+import { useGlobalKeyboardShortcut } from '@/hooks/use-keyboard-shortcuts';
 interface FullscreenContextProps {
   isFullscreen: boolean;
   toggleFullscreen: () => Promise<void>;
@@ -41,6 +41,21 @@ export function FullscreenProvider({ children }: { children: React.ReactNode }) 
     // Clear the transition state after the window has safely resized and settled
     setTimeout(() => setIsTransitioning(false), 300);
   }, [isElectron]);
+
+  useGlobalKeyboardShortcut(['f11'], toggleFullscreen, {
+    description: 'Toggle fullscreen',
+    id: 'fullscreen-toggle'
+  });
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (isFullscreen) {e.preventDefault(); toggleFullscreen(); }
+  }, [isFullscreen, toggleFullscreen]);
+  useGlobalKeyboardShortcut(['escape'], (e) => {
+    handleEscape(e);
+  }, {
+    description: 'Exit fullscreen',
+    id: 'fullscreen-exit',
+    preventDefault: true
+  });
 
   // Sync with Electron fullscreen state changes
   useEffect(() => {
