@@ -59,12 +59,6 @@ catalog:
 
 autoInstallPeers: false
 
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - unrs-resolver
-
 overrides:
   # Exclude unused platform-specific binaries to reduce installation size.
   "esbuild>@esbuild/darwin-arm64": "-"
@@ -153,6 +147,6 @@ overrides:
 
 allowBuilds:
   '@firebase/util': true
-  '@google/genai': set this to true or false
+  '@google/genai': false
   esbuild: true
   protobufjs: true
