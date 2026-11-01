@@ -1,109 +1,174 @@
-// Pixel Flow AI Service for extracting tasks from text using Google Gemini API
 const { GoogleGenAI } = require('@google/genai');
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// JSON Schema for task extraction - matches our frontend Task interface subset
-const taskJsonSchema = {
-  type: "object",
+const taskSchema = {
+  type: 'object',
   properties: {
     tasks: {
-      type: "array",
+      type: 'array',
       items: {
-        type: "object",
+        type: 'object',
         properties: {
-          task: { type: "string", description: "The task description/title" },
-          subject: { type: "string", description: "Subject/category for the task" },
-          priority: {
-            type: "string",
-            enum: ["High", "Medium", "Low"],
-            description: "Priority level"
-          },
-          date: {
-            type: ["string", "null"],
-            description: "Date in YYYY-MM-DD format or null if not specified"
-          },
-          startTime: {
-            type: ["string", "null"],
-            description: "Start time in HH:MM format or null if not specified"
-          },
-          endTime: {
-            type: ["string", "null"],
-            description: "End time in HH:MM format or null if not specified"
-          },
-          isAmbiguousDate: {
-            type: "boolean",
-            description: "True if date was ambiguous/not calculable from today"
+          title: { type: 'string', description: 'Task title/Description' },
+          subject: { type: 'string', description: 'Subject name (must match existing)' },
+          date: { type: 'string', nullable: true, description: 'YYYY-MM-DD or null if not specified' },
+          startTime: { type: 'string', nullable: true, description: 'HH:MM format or null' },
+          quadrant: {
+            type: 'string',
+            enum: ['urgent-important', 'not-urgent-important', 'urgent-not-important', 'neither'],
+            description: 'Eisenhower quadrant'
           }
         },
-        required: ["task", "subject", "priority", "isAmbiguousDate"],
+        required: ['title', 'subject', 'quadrant'],
         additionalProperties: false
-      }
-    }
+      },
+    },
   },
-  required: ["tasks"],
-  additionalProperties: false
+  required: ['tasks'],
+  additionalProperties: false,
 };
 
-/**
- * Extract tasks from user input text using Gemini AI
- * @param {string} userInput - Raw text input from user
- * @returns {Promise<Array>} Array of task objects
- */
-async function extractTasksFromText(userInput) {
+function getDefaultTime(dateStr) {
+  if (!dateStr) return '18:00';
+  const day = new Date(dateStr).getDay();
+  return (day === 0 || day === 6) ? '09:00' : '18:00';
+}
+
+function buildContext(settings, sessions) {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()];
+  const nowTime = now.toTimeString().slice(0, 5);
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowDate = tomorrow.toISOString().split('T')[0];
+
+  const friday = new Date(now);
+  const dayOfWeekNum = now.getDay();
+  const daysUntilFriday = (5 - dayOfWeekNum + 7) % 7 || 7;
+  friday.setDate(now.getDate() + daysUntilFriday);
+  const fridayDate = friday.toISOString().split('T')[0];
+
+  const nextMonday = new Date(now);
+  const daysUntilMonday = (1 - now.getDay() + 7) % 7 || 7;
+  nextMonday.setDate(now.getDate() + daysUntilMonday);
+  const nextMondayDate = nextMonday.toISOString().split('T')[0];
+
+  const recentSessions = sessions.filter(s => {
+    const sessionDate = new Date(s.date);
+    const diffDays = (now - sessionDate) / (1000 * 60 * 60 * 24);
+    return diffDays <= 30;
+  });
+
+  const hourCounts = {};
+  const dayCounts = {};
+  recentSessions.forEach(s => {
+    const hour = parseInt(s.startTime?.split(':')[0] || '18');
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    const day = new Date(s.date).getDay();
+    dayCounts[day] = (dayCounts[day] || 0) + 1;
+  });
+
+  const commonHours = Object.entries(hourCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([h]) => parseInt(h));
+
+  const commonDays = Object.entries(dayCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([d]) => parseInt(d));
+
+  return {
+    userName: settings.userName || 'Student',
+    subjects: (settings.subjects || []).map(s => s.name),
+    commonHours: commonHours.length ? commonHours : [18, 19, 20],
+    commonDays: commonDays.length ? commonDays : [1, 2, 3, 4],
+    today,
+    dayOfWeek,
+    now: nowTime,
+    tomorrowDate,
+    fridayDate,
+    nextMondayDate,
+  };
+}
+
+function buildPrompt(input, ctx) {
+  return `Extract tasks from student rant. Return ONLY JSON.
+
+CONTEXT:
+- Name: ${ctx.userName}
+- Subjects: ${ctx.subjects.join(', ') || 'None'}
+- Peak study hours: ${ctx.commonHours.join(', ')}h, days ${ctx.commonDays.join(', ')} (Mon=1)
+- Today: ${ctx.today} (${ctx.dayOfWeek}), Now: ${ctx.now}
+- Tomorrow: ${ctx.tomorrowDate}, Friday: ${ctx.fridayDate}, Next Monday: ${ctx.nextMondayDate}
+
+RULES:
+1. Subject: MUST match list exactly. Fuzzy match: "phys" to "Physics", "math" to "Mathematics". No new subjects.
+2. Date: "tomorrow" to ${ctx.tomorrowDate}, "friday" to ${ctx.fridayDate}, "next monday" to ${ctx.nextMondayDate}, "next week" to Mon-Fri next week. Unknown to null.
+3. Time: "morning" to 09:00, "afternoon" to 14:00, "evening" to 18:00, "night" to 21:00, HH:MM to as-is. Unknown to null (default: weekdays 18:00, weekends 09:00).
+4. Quadrant: YOU decide (urgent-important / not-urgent-important / urgent-not-important / neither).
+5. If unsure on date/time to null.
+6. Output ONLY : {"tasks":[{"title", "subject", "date", "startTime", "quadrant"}]}
+
+RANT:
+${input}`;
+}
+
+function parseResponse(text) {
   try {
-    // Initialize AI client with API key from environment
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('No valid JSON in response');
+  }
+}
 
-    // Get current date for context
-    const currentDate = new Date().toISOString();
+function normalizeTasks(parsed, subjects) {
+  if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
+    throw new Error('Invalid response: missing tasks array');
+  }
 
-    // Construct prompt with explicit instructions
-    const prompt = `
-      Current date: ${currentDate}
+  const validQuadrants = ['urgent-important', 'not-urgent-important', 'urgent-not-important', 'neither'];
+  const subjectSet = new Set(subjects.map(s => s.toLowerCase()));
 
-      Extract actionable tasks from the following text. For each task:
-      - task: description/title of the task
-      - subject: subject or category (if not specified, use "General")
-      - priority: "High", "Medium", or "Low" (if not specified, use "Medium")
-      - date: in YYYY-MM-DD format, or null if not specified or not calculable from today's date
-      - startTime: in HH:MM format, or null if not specified
-      - endTime: in HH:MM format, or null if not specified
-      - isAmbiguousDate: true if date was ambiguous/not calculable, false otherwise
+  return parsed.tasks
+    .map(t => ({
+      title: String(t.title || '').trim(),
+      subject: String(t.subject || '').trim(),
+      date: t.date ? String(t.date).trim() : null,
+      startTime: t.startTime ? String(t.startTime).trim() : null,
+      quadrant: validQuadrants.includes(t.quadrant) ? t.quadrant : 'neither',
+    }))
+    .filter(t => t.title && subjectSet.has(t.subject.toLowerCase()))
+    .map(t => ({
+      ...t,
+      startTime: t.startTime || (t.date ? (new Date(t.date).getDay() === 0 || new Date(t.date).getDay() === 6 ? '09:00' : '18:00') : '18:00'),
+    }));
+}
 
-      If a date is not explicit or cannot be calculated from today's date (${currentDate}),
-      return null for the date and set isAmbiguousDate to true. Do not guess schedules.
+async function extractTasksFromText(userInput, settings = {}, sessions = []) {
+  try {
+    const ctx = buildContext(settings, sessions);
+    const prompt = buildPrompt(userInput, ctx);
 
-      Text to analyze: "${userInput}"
-
-      Return ONLY a JSON object matching the schema. Do not include any other text.
-    `.trim();
-
-    // Temporary: List available models to find the exact Gemma 4 model string
-    try {
-      const models = await ai.models.list();
-      console.log('Available models:', models.map(m => m.name));
-      // Log the first model's name for quick reference
-      if (models.length > 0) {
-        console.log('First model name:', models[0].name);
-      }
-    } catch (listError) {
-      console.warn('Could not list models:', listError.message);
-    }
-
-    // Call Gemini API with structured output
-    const response = await ai.models.generateContent({
-      model: 'gemma-4-31b-it', // Updated to exact Gemma 4 model string (31B instruction-tuned)
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: taskJsonSchema
-      }
+    const interaction = await genAI.interactions.create({
+      model: 'gemini-3.8-flash',
+      input: prompt,
+      response_format: {
+        type: 'text',
+        mime_type: 'application/json',
+        schema: taskSchema,
+      },
     });
 
-    // Parse and return the tasks array
-    const result = JSON.parse(response.text);
-    return result.tasks || [];
+    const text = interaction.output_text;
+    const parsed = JSON.parse(text);
+    return normalizeTasks(parsed, ctx.subjects);
   } catch (error) {
-    console.error('Error extracting tasks from text:', error);
+    console.error('Pixel Flow extraction failed:', error);
     throw error;
   }
 }
