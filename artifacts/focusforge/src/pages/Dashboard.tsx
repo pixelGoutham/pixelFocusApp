@@ -11,8 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import PixelFlowCapture from "@/components/ui/PixelFlowCapture";
-
 import { getSubjectColorByName } from "@/lib/utils";
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub?: string }) {
@@ -22,12 +20,12 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:border-white/[0.15] transition-colors">
+      <Card className="bg-white/3 border border-white/8 rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-colors">
         <CardContent className="p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-              <p className="text-4xl font-semibold tracking-[-0.02em] leading-none font-mono">{value}</p>
+              <p className="text-4xl font-semibold tracking-heading leading-none font-mono">{value}</p>
               {sub && <p className="text-xs text-muted-foreground/50 tracking-wide mt-0.5">{sub}</p>}
             </div>
             <div className="flex items-center justify-center h-10 w-10 rounded-lg">
@@ -123,20 +121,9 @@ export default function Dashboard() {
             whileTap={{ scale: 0.95 }}
             className="gap-2 bg-zinc-900 hover:bg-zinc-800 text-white transition-transform duration-200"
           >
-            <Sparkle className="h-4 w-4" />
-            Pixel Flow
           </motion.button>
         </div>
       </motion.div>
-
-      {/* Pixel Flow Modal */}
-      {isCaptureOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="relative w-[400px] max-w-[90vh]">
-            <PixelFlowCapture onClose={() => setIsCaptureOpen(false)} />
-          </div>
-        </div>
-      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -263,7 +250,7 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground text-center py-4">No upcoming tasks</p>
             ) : upcoming.map(task => (
               <div key={task.id} data-testid={`upcoming-task-${task.id}`} className="flex items-center gap-3 p-2.5 rounded-lg border border-border hover:border-primary/20 transition-colors">
-                <div className={cn("h-2 w-2 rounded-full flex-shrink-0", task.priority === "High" ? "bg-rose-400" : task.priority === "Medium" ? "bg-amber-400" : "bg-emerald-400")} />
+                <div className={cn("h-2 w-2 rounded-full shrink-0", task.priority === "High" ? "bg-rose-400" : task.priority === "Medium" ? "bg-amber-400" : "bg-emerald-400")} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{task.task}</p>
                   <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}</p>

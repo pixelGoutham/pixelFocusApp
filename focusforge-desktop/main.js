@@ -19,7 +19,7 @@ function initDiscordRPC() {
     rpcReady = true;
     console.log('Discord RPC Connected');
   });
-
+  // meow
   // Fails silently if Discord isn't open
   rpc.login({ clientId }).catch(() => console.log('Discord not running'));
 }

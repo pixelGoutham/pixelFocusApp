@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, Upload, Trash2, Save, AlertTriangle, Cloud, CloudOff, RefreshCw, CheckCircle2, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { Download, Upload, Trash2, Save, AlertTriangle, Cloud, CloudOff, RefreshCw, CheckCircle2, LogOut, Sun, Moon, Monitor, Mail, Github, MessageCircle, HelpCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { exportData, importData, DEFAULT_SETTINGS } from "@/lib/store";
 import { useTheme, Theme } from "@/lib/ThemeContext";
-import { isFirebaseConfigured } from "@/lib/firebase";
 import { syncToCloud, onSyncStatusChange, SyncStatus, getLastSyncTime } from "@/lib/cloudSync";
 import { format } from "date-fns";
 
@@ -366,6 +365,60 @@ export default function Settings() {
               <Upload className="h-4 w-4" />Import Backup
             </Button>
             <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} data-testid="input-import-file" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Support ───────────────────────────────────────────────────────────── */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />Support
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">Need help? We're here for you.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() =>
+                window.open('mailto:hello@pixelgoutham.tech?subject=Pixel%20Focus%20Support', '_blank')
+              }
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border/80 transition-all active:scale-[0.98]"
+            >
+              <Mail className="h-4 w-4 flex-shrink-0" />
+              <span>Email Support</span>
+              <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-50" />
+            </button>
+            <button
+              onClick={() =>
+                window.open('https://github.com/pixelGoutham/pixelFocusApp/issues', '_blank')
+              }
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border/80 transition-all active:scale-[0.98]"
+            >
+              <Github className="h-4 w-4 flex-shrink-0" />
+              <span>GitHub Issues</span>
+              <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-50" />
+            </button>
+            <button
+              onClick={() =>
+                window.open('https://discord.gg/mwBVFbwCtn', '_blank')
+              }
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border/80 transition-all active:scale-[0.98]"
+            >
+              <MessageCircle className="h-4 w-4 flex-shrink-0" />
+              <span>Discord Community</span>
+              <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-50" />
+            </button>
+            <button
+              onClick={() =>
+                window.open('https://github.com/pixelGoutham/pixelFocusApp/wiki', '_blank')
+              }
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border/80 transition-all active:scale-[0.98]"
+            >
+              <HelpCircle className="h-4 w-4 flex-shrink-0" />
+              <span>FAQ & Wiki</span>
+              <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-50" />
+            </button>
           </div>
         </CardContent>
       </Card>

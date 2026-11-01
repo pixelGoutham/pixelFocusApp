@@ -130,7 +130,7 @@ function normalizeTasks(parsed, subjects) {
   if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
     throw new Error('Invalid response: missing tasks array');
   }
-
+  // meow 
   const validQuadrants = ['urgent-important', 'not-urgent-important', 'urgent-not-important', 'neither'];
   const subjectSet = new Set(subjects.map(s => s.toLowerCase()));
 
