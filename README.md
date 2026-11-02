@@ -1,4 +1,4 @@
-Want to get your life back together? Presenting Pixel Focus - The Ultimate Way to Lock in for Windows  
+ Want to get your life back together? Presenting Pixel Focus - The Ultimate Way to Lock in for Windows  
  
 Ever felt like a zombie staring at the wall after 8 hours of classes and then watching random lectures, forgetting the test awaiting you tomorrow?  ╰(*°▽°*)╯ 
  
@@ -30,6 +30,14 @@ BTW, there is a tree in the app, go check it out.
 </a>
 
 Free version can be found on the releases tab on github, but I would really be grateful if you can support me. I'm 16 year old college student trying to make ends meet.
+______________________________________________________________________________________________________________________________________________________________________________
+**How To Use**
+1. Head over to releases and grab the latest version. (Currently supported OS are Windows(x86/arm) and Linux.
+2. Unzip the file and open Pixel Focus.exe or PixelFocus.appimage according to you OS
+3. Enjoy the app and organize your life
+
+Terra  (Week 2):
+Check the release section for v2.3.0
 
 Well have a great day, 
 
