@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { href: '/study-planner', label: 'Study Planner',icon: BookOpen },
   { href: '/mock-tests',    label: 'Mock Tests',   icon: ClipboardList },
   { href: '/consistency',   label: 'My Tree',      icon: TreePine },
+  { href: '/oled-clock', label: 'OLED Clock', icon: Clock },
 ];
 
 // ─── Auth Indicator ────────────────────────────────────────────────────────────

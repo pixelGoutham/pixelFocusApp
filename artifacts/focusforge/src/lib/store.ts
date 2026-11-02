@@ -50,6 +50,14 @@ export interface Subject {
   color: string;
 }
 
+export interface Reminder {
+  id: string;
+  label: string;       // e.g., "Morning Study", "Evening Review"
+  time: string;        // HH:MM in 24h format
+  days: number[];      // 0=Sun, 1=Mon, ... 6=Sat
+  enabled: boolean;
+}
+
 export interface AppSettings {
   userName: string;
   pomodoroWork: number;
@@ -62,6 +70,7 @@ export interface AppSettings {
   subjects: Subject[];
   studyPlan: Record<string, Record<string, number>>; // subjectName -> "yyyy-MM-dd" -> hours
   theme: 'dark' | 'light' | 'system';
+  reminders: Reminder[];
 }
 
 // Storage keys
@@ -110,6 +119,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   subjects: [],
   studyPlan: {},
   theme: 'dark',
+  reminders: [
+    { id: 'morning', label: 'Morning Study', time: '09:00', days: [1,2,3,4,5], enabled: true },
+    { id: 'evening', label: 'Evening Review', time: '19:00', days: [1,2,3,4,5], enabled: true },
+  ],
 };
 export const getSettings = async (): Promise<AppSettings> => {
   const saved = await localforage.getItem<AppSettings>(KEYS.settings);

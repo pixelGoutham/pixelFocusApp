@@ -28,6 +28,7 @@ import Consistency from "@/pages/Consistency";
 import QuickCapture from "@/pages/QuickCapture";
 import { MusicPlayerProvider } from "@/lib/MusicPlayerContext";
 import { ShortcutsProvider } from "./lib/ShortcutsContext";
+import OLEDClock from "./pages/OLEDClock";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,8 @@ function AppRouter() {
     <>
       {/* QuickCapture route - outside Layout for Electron window */}
       <Route path="/quick-capture" component={QuickCapture} />
+      <Route path={'/oled-clock'} component={OLEDClock} />
+
 
       {/* Main app routes - inside Layout */}
       <Layout>
