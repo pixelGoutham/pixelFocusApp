@@ -1,68 +1,156 @@
-import { useCallback, useMemo } from "react";
-import { Link } from "wouter";
-import { format, isToday, parseISO, startOfWeek, addDays } from "date-fns";
-import { useStore } from "@/lib/StoreContext";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import {Link} from 'wouter';
+import {format, isToday, parseISO, startOfWeek, addDays} from 'date-fns';
+import {useStore} from '@/lib/StoreContext';
 import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcuts";
-import { Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp, Sparkle } from "@phosphor-icons/react";
+import {Clock, CheckSquare, Fire, Target, CalendarBlank, Timer, TrendUp, Sparkle} from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import { getSubjectColorByName } from "@/lib/utils";
+import { motion, AnimatePresence} from 'framer-motion';
+import { cn, getSubjectColorByName } from "@/lib/utils";
+import { time } from "node:console";
+import { Numerals } from "react-day-picker";
 
-function StatCard({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string; sub?: string }) {
+const SPRING_CRITICALLY_DAMPED = { type: 'spring' as const, bounce: 0, duration: 0.4 };
+const SPRING_MOMENTUM =   { type: 'spring' as const, bounce: 0.2, duration: 0.35};
+
+const GLASS_SURFACE = 
+'bg-white/[0.025] dark:bg-white/[0.025] border border-white/[0/08] backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255, 255, 255, 0.1)]';
+
+function timeToMinutes(timeStr?: string): number {
+  if (!timeStr || !timeStr.includes(':')) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function StatBento ({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  progress,
+  accentColor,
+  delay = 0,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub: string;
+  progress?: number;
+  accentColor: string;
+  delay?: number;
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      initial={{ opacity: 0, y: 12}}
+      animate={{opacity: 1, y: 0}}
+      transition={{ ...SPRING_CRITICALLY_DAMPED, delay}}
+      whileTap={{ scale: 0.98}}
+      className="h-full"
     >
-      <Card className="bg-white/3 border border-white/8 rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-colors">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-              <p className="text-4xl font-semibold tracking-heading leading-none font-mono">{value}</p>
-              {sub && <p className="text-xs text-muted-foreground/50 tracking-wide mt-0.5">{sub}</p>}
-            </div>
-            <div className="flex items-center justify-center h-10 w-10 rounded-lg">
-              <Icon weight="fill" className="h-5 w-5 text-muted-foreground" />
+      <Card
+        className={cn(
+          GLASS_SURFACE, 'h-full rounded-2xl hover:border-white/[0.16] transition-colors overflow-hidden relative group'
+        )}
+      >
+        <div
+          className="N-glow absolute -top-12 -right-12 h-28 w-28 rounded-full blur-2xl opacity-15 group-hover:opacity-30 transition-opacity pointer-events-none"
+          style={{ backgroundColor: accentColor}}
+        />
+        <CardContent className="p-4 sm:p-5 flex flex-col justify-between h-full gap-3">
+          <div className="flex items-center justify-betweent">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
+              {label}
+            </span>
+            <div 
+              className="flex items-center justify-center h-8 w-8 rounded-xl border border-white/[0.08]"
+              style={{ backgroundColor: `${accentColor}18`, color: accentColor}}
+            >
+              <Icon weight='fill' className='h-4 w-4' />
             </div>
           </div>
+          <div>
+            <p className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] leading-[1.05] font-mono tabular-nums text-foreground">
+              <span>{sub}</span>
+              {typeof progress === 'number' && (
+                <span className="font-mono text-[11px] text-foreground/80">
+                  {Math.round(Math.min(progress, 100))}%
+                </span>
+              )}
+            </p>
+          </div>
+
+          {typeof progress === 'number' && (
+            <div className="h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(Math.max(progress, 2), 100)}`}}
+                transition={SPRING_CRITICALLY_DAMPED}
+                className="h-full rounded-full"
+                style={{ backgroundColor: accentColor}}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
   );
 }
 
-function CircularProgress({ value, max, label }: { value: number; max: number; label: string }) {
-  const pct = Math.min(value / max, 1);
-  const r = 54;
+function CircularGoalRing({
+  value,
+  max,
+  streak,
+}: {
+  value: number;
+  max: number;
+  streak: number;
+}) {
+  const safeMax = Math.max(max, 1);
+  const pct = Math.min(value / safeMax, 1);
+  const r = 52;
   const circumference = 2 * Math.PI * r;
-  const offset = circumference * (1 - pct);
+  const offset = circumference * (1 - pct );
+
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative flex items-center justify-center">
-        <svg width="140" height="140" className="-rotate-90">
-          <circle cx="70" cy="70" r={r} strokeWidth="8" stroke="hsl(var(--border))" fill="none" />
-          <circle
-            cx="70" cy="70" r={r}
-            strokeWidth="8"
-            stroke="hsl(var(--primary))"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.8s ease" }}
-          />
-        </svg>
-        <div className="absolute text-center">
-          <p className="text-xl font-bold font-mono">{Math.round(pct * 100)}%</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
+    <div className="relative flex items-center justify-center shrink-0">
+      <svg width='132' height='132' className="-rotate-90">
+        <circle
+          cx='66'
+          cy='66'
+          r={r}
+          strokeWidth='8'
+          stroke='rgba(255, 255, 255, 0.06)'
+          fill="none"
+        />
+        <circle
+          cx='66'
+          cy='66'
+          r={r}
+          strokeWidth='8'
+          stroke='hsl(var(--primary))'
+          fill='none'
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1)'}}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="text-2xl font-bold font-mono tabular-nums tracking-[-0.03em] leading-none">
+          {Math.round(pct * 100)}%
+        </span>
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+          Daily Goal
+        </span>
+        {streak > 0 && (
+          <span className="mt-1 inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-full">
+            <Fire weight="fill" className="h-2.5 w-2.5" />
+            {streak}d
+          </span>
+        )}
       </div>
     </div>
   );
@@ -70,200 +158,12 @@ function CircularProgress({ value, max, label }: { value: number; max: number; l
 
 export default function Dashboard() {
   const { tasks, sessions, settings, setTasks } = useStore();
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const [now, setNow] = useState(() => new Date());
+  const [scheduleTab, setScheduleTab] = useState<'all' | 'remaining' | 'completed'>('all');
+  const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
 
-  const todayTasks = useMemo(() => tasks.filter(t => t.date === todayStr).sort((a, b) => a.startTime.localeCompare(b.startTime)), [tasks, todayStr]);
-  const completedToday = todayTasks.filter(t => t.completed).length;
-  const todayMinutes = useMemo(() => sessions.filter(s => s.date === todayStr).reduce((acc, s) => acc + s.durationMinutes, 0), [sessions, todayStr]);
-  const focusScore = todayTasks.length > 0 ? Math.round((completedToday / todayTasks.length) * 100) : 0;
-  const upcoming = useMemo(() => tasks.filter(t => !t.completed && t.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).slice(0, 5), [tasks, todayStr]);
-
-  const studyHours = Math.floor(todayMinutes / 60);
-  const studyMins = todayMinutes % 60;
-
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const heatmapDays = Array.from({ length: 7 }, (_, i) => {
-    const day = addDays(weekStart, i);
-    const dayStr = format(day, "yyyy-MM-dd");
-    const dayTasks = tasks.filter(t => t.date === dayStr);
-    return { day, dayStr, tasks: dayTasks };
-  });
-
-  const toggleTask = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-  };
-  const toggleCapture = useCallback(() => setIsCaptureOpen(prev => !prev), []);
-
-  const [isCaptureOpen, setIsCaptureOpen] = useState(false);
-  useKeyboardShortcut(['ctrl', 'k'], () => {
-    toggleCapture();
-  }, {description: 'Open Pixel Flow capture', id: 'pixel-flow-capture'});
-  return (
-    <>
-      {/* Greeting with Pixel Flow button */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">{greeting}, {settings.userName}</h2>
-          <p className="text-muted-foreground text-sm mt-0.5">{format(new Date(), "EEEE, d MMMM yyyy")} — Stay focused. Your future is built daily.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/pomodoro">
-            <Button data-testid="button-start-focus" size="sm" className="gap-2 bg-primary text-primary-foreground shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.2)]">
-              <Timer className="h-4 w-4 text-primary-foreground" />
-              Start Focus Session
-            </Button>
-          </Link>
-          {/* Apple Design enhanced button with press feedback */}
-          <motion.button
-            onClick={() => setIsCaptureOpen(true)}
-            whileTap={{ scale: 0.95 }}
-            className="gap-2 bg-zinc-900 hover:bg-zinc-800 text-white transition-transform duration-200"
-          >
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock} label="Study Time" value={`${studyHours}h ${studyMins}m`} sub="today" />
-        <StatCard icon={CheckSquare} label="Tasks Done" value={`${completedToday} / ${todayTasks.length}`} sub="today" />
-        <StatCard icon={TrendUp} label="Focus Score" value={`${focusScore}%`} sub="today" />
-        <StatCard icon={Fire} label="Day Streak" value={`${settings.currentStreak}`} sub="days" />
-      </div>
-
-      {/* Middle Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Schedule */}
-        <div className="lg:col-span-2">
-          <Card className="h-full bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center justify-between">
-                <span>Today's Schedule</span>
-                <Link href="/calendar"><span className="text-xs text-primary cursor-pointer hover:underline">View Calendar</span></Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {todayTasks.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  <CalendarBlank className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
-                  <p>No tasks today. Import a CSV or add tasks in the calendar.</p>
-                </div>
-              ) : todayTasks.map(task => (
-                <div
-                  key={task.id}
-                  data-testid={`task-row-${task.id}`}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                    task.completed ? "opacity-50 border-border/50" : "border-border hover:border-primary/20"
-                  )}
-                >
-                  <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={() => toggleTask(task.id)}
-                    data-testid={`checkbox-task-${task.id}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm font-medium truncate", task.completed && "line-through text-muted-foreground")}>{task.task}</p>
-                    <p className="text-xs text-muted-foreground">{task.startTime} – {task.endTime}</p>
-                  </div>
-                  <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>
-                    {task.subject}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Daily Progress */}
-        <div className="flex flex-col gap-4">
-          <Card className="bg-card border-border flex-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                Daily Goal Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-2 pb-4">
-              <CircularProgress value={todayMinutes} max={settings.dailyGoalMinutes} label="of daily goal" />
-              <p className="text-xs text-muted-foreground text-center">
-                {studyHours}h {studyMins}m of {Math.floor(settings.dailyGoalMinutes / 60)}h goal
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Heatmap + Upcoming */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Focus Heatmap */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Week Heatmap</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-1">
-              {heatmapDays.map(({ day, dayStr, tasks: dayTasks }) => {
-                const isTodays = isToday(day);
-                return (
-                  <div key={dayStr} className="flex-1 flex flex-col gap-1">
-                    <p className={cn("text-xs text-center font-medium mb-1", isTodays ? "text-primary" : "text-muted-foreground")}>
-                      {format(day, "EEE")}
-                    </p>
-                    {Array.from({ length: 12 }, (_, h) => {
-                      const hour = h + 7;
-                      const hasTask = dayTasks.some(t => {
-                        const start = parseInt(t.startTime.split(":")[0]);
-                        const end = parseInt(t.endTime.split(":")[0]);
-                        return hour >= start && hour < end;
-                      });
-                      return (
-                        <div
-                          key={h}
-                          className={cn(
-                            "h-4 rounded-sm transition-colors",
-                            hasTask ? "bg-primary/60" : "bg-muted"
-                          )}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-2 mt-3 justify-end">
-              <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-sm bg-muted" /><span className="text-xs text-muted-foreground">Empty</span></div>
-              <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-sm bg-primary/60" /><span className="text-xs text-muted-foreground">Scheduled</span></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Tasks */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Upcoming Tasks</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {upcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No upcoming tasks</p>
-            ) : upcoming.map(task => (
-              <div key={task.id} data-testid={`upcoming-task-${task.id}`} className="flex items-center gap-3 p-2.5 rounded-lg border border-border hover:border-primary/20 transition-colors">
-                <div className={cn("h-2 w-2 rounded-full shrink-0", task.priority === "High" ? "bg-rose-400" : task.priority === "Medium" ? "bg-amber-400" : "bg-emerald-400")} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{task.task}</p>
-                  <p className="text-xs text-muted-foreground">{format(parseISO(task.date), "d MMM")} • {task.startTime}</p>
-                </div>
-                <Badge variant="outline" className="text-xs border" style={{ backgroundColor: getSubjectColorByName(task.subject, settings.subjects) }}>
-                  {task.subject}
-                </Badge>
-              </div>
-            ))
-          }
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval)
+  })
 }

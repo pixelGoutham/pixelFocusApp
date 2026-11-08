@@ -1,15 +1,97 @@
 try { process.loadEnvFile(); } catch (e) {}
 
-const { app, BrowserWindow, shell, Menu, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain, globalShortcut, Notification } = require('electron');
 const path = require('path');
 const DiscordRPC = require('discord-rpc');
-const { extractTasksFromText } = require('./pixelFlowService');
 
 const clientId = '1553306840522039316';
+
+app.setName('Pixel Focus');
+app.setAppUserModelId('com.pixel.app')
 
 let rpc;
 let rpcReady = false;
 let captureWindow = null;
+
+let notificationTimers = new Map();
+let taskNotificationCache = new Map();
+
+function scheduleTaskNotification(task) {
+  cancelTaskNotification(task.id);
+
+  const taskDateTime = new Date(`${task.date}T${task.startTime}`);
+  const now = Date.now();
+  const delay = taskDateTime.getTime() - now;
+
+  if (delay > 0 && delay <= 24 * 60 * 60 * 1000) {
+    const timeoutId = setTimeout(() => {
+      showTaskNotification(task);
+      notificationTimers.delete(task.id);
+      taskNotificationCache.delete(task.id);
+    }, delay);
+
+    notificationTimers.set(task.id, {timeoutId, task});
+    taskNotificationCache.set(task.id, {
+      title: task.task,
+      body: `${task.subject} • ${task.startTime}–${task.endTime}`,
+      scheduledTime: taskDateTime.toISOString()
+    });
+  }
+}
+
+function cancelTaskNotification(taskId) {
+  const entry = notificationTimers.get(taskId);
+  if (entry) {
+    clearTimeout(entry.timeoutId);
+    notificationTimers.delete(taskId);
+    taskNotificationCache.delete(taskId);
+  }
+}
+
+function showTaskNotification(task) {
+  if (!Notification.isSupported()) return;
+
+  const notification = new Notification({
+    title: 'Task Reminder',
+    body: `${task.task} — ${task.subject} (${task.startTime}–${task.endTime})`,
+    silent: false,
+    urgency: 'normal',
+    icon: path.join(app,isPackaged ? process.resourcesPath: __dirname, 'logo', 'logo_dark.png')
+  });
+
+  notification.show();
+
+  const wins = BrowserWindow.getAllWindows();
+  wins.forEach(win => {
+    win.webContents.send('task-notification-triggered', {
+      taskId: task.id,
+      title: task.task,
+      subject: task.subject,
+      startTime: task.startTime,
+      endTime: task.endTime
+    });
+  });
+}
+//time ticking so fast im sheeeesh scared
+
+function rescheduleAllNotifications(tasks) {
+  notificationTimers.forEach((entry, taskId) => {
+    clearTimeout(entry.timeoutId);
+  })
+  notificationTimers.clear();
+  taskNotificationCache.clear();
+
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  tasks.forEach(t => {
+    if (!t.completed && (t.date === now.toISOString().split('T')[0] || t.date === tomorrowStr)) {
+      scheduleTaskNotification(t);
+    }
+  });
+}
 
 function initDiscordRPC() {
   DiscordRPC.register(clientId);
@@ -175,6 +257,46 @@ ipcMain.on('hide-capture-window', (event) => {
   if (captureWindow) {
     captureWindow.hide();
   }
+});
+
+
+ipcMain.handle('notifications:schedule-task', (event, task) => {
+  try {
+    scheduleTaskNotification(task);
+    return { success: true };
+  } catch (e) {
+    console.error('[Notifications] Schedule failed:', e);
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('notifications:cancel-task', (event, taskId) => {
+  try {
+    cancelTaskNotification(taskId);
+    return { success: true };
+  } catch (e) {
+    console.error('[Notifications] Cancel failed:', e);
+    return { success: false, error: e.message };
+  }
+});
+
+
+ipcMain.handle('notifications:reschedule-all', (event, tasks) => {
+  try {
+    rescheduleAllNotifications(tasks);
+    return {success: true};
+  } catch (e) {
+    console.error('[Notifications] Reschedule all failed: ', e);
+    return {success: false, error: e.message};
+  }
+});
+
+ipcMain.handle('notifications:get-scheduled', () => {
+  const scheduled = [];
+  taskNotificationCache.forEach((value, key) => {
+    scheduled.push({ taskId: key, ...value});
+  });
+  return {success: true, data: scheduled};
 });
 
 app.whenReady().then(() => {

@@ -24,5 +24,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Pixel Flow AI task extraction
   proposeTasks: (text) => ipcRenderer.invoke('pixel-flow:propose', text),
   // Hide capture window
-  hideCaptureWindow: () => ipcRenderer.send('hide-capture-window')
+  hideCaptureWindow: () => ipcRenderer.send('hide-capture-window'),
+
+  scheduleTaskNotification: (task) => ipcRenderer.invoke('notifications:schedule-task', task),
+  cancelTaskNotification: (taskId) => ipcRenderer.invoke('notifications:cancel-task', taskId),
+  rescheduleAllNotifications: (tasks) => ipcRenderer.invoke('notifications:reschedule-all', tasks),
+  getScheduledNotifications: () => ipcRenderer.invoke('notifications:get-scheduled'),
+  onTaskNotification: (callback) => {
+    ipcRenderer.on('task-notification-triggered', (event, data) => callback(data));
+    return () => ipcRenderer.removeListener('task-notification-triggered', callback);
+  }
 });

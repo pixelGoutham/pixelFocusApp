@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback } from "react";
+import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from "react";
 
 // ─── Ambient sound definitions (Pure Math) ───────────────────────────────────
 type SoundId = 'white' | 'brown' | 'pink' | 'rain' | 'storm' | 'ocean' | 'fire' | 'cafe' | 'wind';
@@ -101,7 +101,7 @@ interface MusicPlayerState {
   stopAll: () => void;
   handleMasterVolChange: (val: number) => void;
 }
-
+// life too precious to lose eh
 const MusicPlayerContext = createContext<MusicPlayerState | null>(null);
 
 export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -115,6 +115,8 @@ export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const masterRef = useRef<GainNode | null>(null);
   const activeSounds = useRef<Map<SoundId, ActiveSound>>(new Map());
 
+  const hasActiveSoundsRef = useRef(false);
+
   const getCtx = useCallback(() => {
     if (!ctxRef.current) {
       ctxRef.current = new AudioContext();
@@ -126,6 +128,21 @@ export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return ctxRef.current;
   }, [masterVol]);
 
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && ctxRef.current?.state === 'suspended' && hasActiveSoundsRef.current) {
+        try {
+          await ctxRef.current.resume();
+        } catch (e) {
+          console.warn('[MusicPlayer] Failed to resume AudioContext on visibility change:  ', e);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return() => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const toggleSound = useCallback((id: SoundId) => {
     setPlaying(prev => {
       const next = new Set(prev);
@@ -133,6 +150,7 @@ export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const s = activeSounds.current.get(id);
         if (s) { try { s.source.stop(); s.lfo?.stop(); } catch {} activeSounds.current.delete(id); }
         next.delete(id);
+        if (next.size === 0) hasActiveSoundsRef.current = false;
       } else {
         const ctx = getCtx();
         const a = spawnSound(ctx, id, masterRef.current!);
@@ -153,6 +171,7 @@ export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const stopAll = useCallback(() => {
     activeSounds.current.forEach(s => { try { s.source.stop(); s.lfo?.stop(); } catch {} });
     activeSounds.current.clear();
+    hasActiveSoundsRef.current = false;
     setPlaying(new Set());
   }, []);
 

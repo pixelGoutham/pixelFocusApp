@@ -5,6 +5,8 @@ import {
   getFlashcards, saveFlashcards, getMockTests, saveMockTests,
   getSettings, saveSettings, DEFAULT_SETTINGS,
 } from './store';
+import { isElectron } from '@/lib/utils';
+
 // date-fns no longer needed here after removing seed data
 import {
   scheduleSync, setupPeriodicSync, syncToCloud,
@@ -17,6 +19,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+
+interface NotifyHelpers {
+  scheduleTaskNotification: (task: Task) => Promise<void>;
+  cancelTaskNotification: (taskId: string) => Promise<void>;
+}
 
 interface StoreContextType {
   tasks: Task[];
@@ -31,6 +39,7 @@ interface StoreContextType {
   setSettings: (settings: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
   isLoading: boolean;
   reloadAll: (broadcastChange?: boolean) => Promise<void>;
+  notify: NotifyHelpers;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -47,6 +56,7 @@ const CHANNEL_NAME = 'pixel-store-sync';
 
 export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [tasks, setTasksState]         = useState<Task[]>([]);
   const [sessions, setSessionsState]   = useState<StudySession[]>([]);
@@ -84,6 +94,24 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     channelRef.current?.postMessage({ table });
   };
 
+  const scheduleTaskNotification = useCallback(async (task: Task) => {
+    if (!isElectron || !window.electronAPI?.scheduleTaskNotification) return;
+    try {
+      await window.electronAPI.scheduleTaskNotification(task);
+    } catch (e) {
+      console.warn('[StoreContext] Failed to schedule notification: ', e);
+    }
+  }, []);
+
+  const cancelTaskNotification = useCallback(async (taskID: string) => {
+    if (!isElectron || !window.electronAPI?.cancelTaskNotification) return;
+    try {
+      await window.electronAPI.cancelTaskNotification(taskID);
+    } catch (e) {
+      console.warn('[StoreContext] Failed to cancel notification: ', e);
+    }
+  }, []);
+
   // ── Local data loader ────────────────────────────────────────────────────
 
   const loadLocal = async () => {
@@ -103,6 +131,23 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(false);
     setupPeriodicSync();
   };
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.rescheduleAllNotifications) return;
+    let mounted = true;
+    const reschedule = async () => {
+      const allTasks = await getTasks();
+      if (mounted) {
+        try {
+          await window.electronAPI.rescheduleAllNotifications(allTasks);
+        } catch (e) {
+          console.warn('[StoreContext] Failed to reschedule all notifications: ', e);
+        }
+      }
+    };
+    reschedule();
+    return () => {mounted = false};
+  }, []);
 
   // ── Initial load ─────────────────────────────────────────────────────────
 
@@ -169,6 +214,11 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
       saveTasks(next);
       broadcast('tasks');
       if (isFirebaseConfigured && user?.uid) scheduleSync();
+
+      next.forEach(task => {
+        if (!task.completed) scheduleTaskNotification(task);
+      });
+      prev.filter(t => !next.some(nt => nt.id === t.id) || next.find(nt => nt.id === t.id)?.completed).forEach(t => cancelTaskNotification(t.id));
       return next;
     });
   };
@@ -220,6 +270,8 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     if (broadcastChange) broadcast('all');
   };
 
+  const notify: NotifyHelpers = { scheduleTaskNotification, cancelTaskNotification };
+
   // ── Conflict resolution dialog ────────────────────────────────────────────
 
   const cloudDate = cloudConflict?.syncedAt
@@ -235,6 +287,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
       settings, setSettings,
       isLoading,
       reloadAll,
+      notify,
     }}>
       {children}
 
