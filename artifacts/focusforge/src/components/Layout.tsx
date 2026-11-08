@@ -3,7 +3,7 @@ import { useLocation, Link } from 'wouter';
 import {
   LayoutDashboard, CalendarDays, CheckSquare, Grid2x2,
   Timer, Clock, BarChart3, BookOpen, ClipboardList, Settings, Zap,
-  Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon, Menu, List
+  Music2, TreePine, X, ExternalLink, Cloud, LogIn, Sun, Moon, Menu, List, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { href: '/mock-tests',    label: 'Mock Tests',   icon: ClipboardList },
   { href: '/consistency',   label: 'My Tree',      icon: TreePine },
   { href: '/oled-clock', label: 'OLED Clock', icon: Clock },
+  {href: '/universe', label: 'Universe', icon:Globe},
 ];
 
 // ─── Auth Indicator ────────────────────────────────────────────────────────────
@@ -83,7 +84,7 @@ const SIDEBAR_EXPANDED  = 240;
 const SIDEBAR_COLLAPSED = 64;
 const MOBILE_BREAKPOINT = 768;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Ola/Ather idk─── Component ────────────────────────────────────────────────────────────────
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
