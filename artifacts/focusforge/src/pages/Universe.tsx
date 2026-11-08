@@ -1,6 +1,21 @@
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+
+
 export default function Universe() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLocation('/')
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setLocation])
   return (
-    <div className="w-full h-screen">
+    <div className="fixed inset-0 z-50 w-full h-full overflow-hidden bg-black">
       <iframe
         src="universe-embed/index.html"
         title="Embedded Universe Project"
