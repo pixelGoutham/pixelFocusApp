@@ -70,7 +70,6 @@ export default function Stopwatch() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 flex flex-col items-center justify-center min-h-[calc(100vh-6rem)]">
       
-      {/* Main Glassmorphism Stopwatch Card */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -82,7 +81,6 @@ export default function Stopwatch() {
           sw.running ? "opacity-100" : "opacity-0"
         )} />
 
-        {/* Subject Selector Pill - Strictly Monochrome */}
         <div className="z-10 mb-12">
           <Select value={sw.selectedSubject} onValueChange={v => updateSw({ selectedSubject: v })}>
             <SelectTrigger className="w-48 rounded-full bg-white/[0.03] border-white/[0.08] text-white backdrop-blur-md focus:ring-0">
@@ -105,7 +103,6 @@ export default function Stopwatch() {
           </AnimatePresence>
         </div>
 
-        {/* Massive Apple-Style Display - Red Milliseconds */}
         <div className="z-10 text-center mb-16 select-none">
           <div className="flex items-baseline justify-center gap-1 font-mono font-bold tracking-tighter tabular-nums" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
             <span className="text-7xl md:text-[9rem] leading-none text-white drop-shadow-lg">
@@ -117,7 +114,6 @@ export default function Stopwatch() {
           </div>
         </div>
 
-        {/* High-Contrast Controls */}
         <div className="z-10 flex items-center justify-center gap-6 w-full max-w-sm">
           <Button 
             variant="outline" 
@@ -149,7 +145,6 @@ export default function Stopwatch() {
           </Button>
         </div>
 
-        {/* Log Session Action - Stealth Neutral */}
         <AnimatePresence>
           {!sw.running && swElapsed > 0 && (
             <motion.div 
@@ -167,7 +162,6 @@ export default function Stopwatch() {
         </AnimatePresence>
       </motion.div>
 
-      {/* Laps List - Monochrome & Red */}
       <AnimatePresence>
         {laps.length > 0 && (
           <motion.div 
