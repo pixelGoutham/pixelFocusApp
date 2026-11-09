@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/StoreContext";
+import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcuts";
 import { useToast } from "@/hooks/use-toast";
 import { cn, getSubjectColorByName } from "@/lib/utils";
 import type { Task } from "@/lib/store";
@@ -51,6 +52,29 @@ export default function Calendar() {
   const [csvImporting, setCsvImporting] = useState(false);
   const [now, setNow] = useState(new Date());
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcut(['arrowleft'], () => handlePrev(), {
+    description: 'Previous period',
+    preventDefault: true,
+  });
+  useKeyboardShortcut(['arrowright'], () => handleNext(), {
+    description: 'Next Period',
+    preventDefault: true,
+  });
+  useKeyboardShortcut(['t'], () => handleToday(), {
+    description: 'Go to today',
+    preventDefault: true,
+  });
+  useKeyboardShortcut(['n'], () => {
+    setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
+    setForm(EMPTY_FORM);
+    setDialogOpen(true);
+  }, {description: 'New Task', preventDefault: true});
+  useKeyboardShortcut(['escape'], () => setDialogOpen(false), {
+    description: 'Close Dialog',
+    preventDefault: true,
+    allowInInput: true,
+  });
 
   const subjects = settings.subjects ?? [];
 

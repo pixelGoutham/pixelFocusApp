@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { getSubjectColorByName } from "@/lib/utils";
 import { useDraggable } from "@/hooks/use-draggable";
 import type { Task } from "@/lib/store";
+import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcuts";
 
 function DraggableTask({ task, toggleTask, deleteTask, openEdit, getSubjectColorByName }: {
   task: Task;
@@ -133,6 +134,11 @@ export default function Tasks() {
     return true;
   }).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)), [tasks, filterSubject, filterStatus, search]);
 
+  useKeyboardShortcut(['n'], () => openAdd(), {
+    description: 'New Task',
+    preventDefault: true,
+  });
+  
   const openAdd = () => {
     setEditing(null);
     setForm(EMPTY_FORM);

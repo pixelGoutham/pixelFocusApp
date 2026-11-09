@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { useMusicPlayer } from "@/lib/MusicPlayerContext";
+import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcuts";
 
 export const PLAYER_HEIGHT = 80;
 
@@ -40,6 +41,33 @@ export default function Music() {
 
   // ── Music Player Hook ────────────────────────────────────────────────
   const { playing, volumes, masterVol, toggleSound, setVolume, stopAll, handleMasterVolChange } = useMusicPlayer();
+
+  useKeyboardShortcut([' '], () => {
+    if (playing.size > 0) {
+      stopAll();
+    } else {
+      toggleSound('ocean');
+    }
+  }, {description: 'Play/Pause all', preventDefault: true, allowInInput: false});
+
+  useKeyboardShortcut(['arrowup'], () => {
+    const newVol = Math.min(masterVol + 0.1, 1);
+    handleMasterVolChange(newVol);
+  }, {description: 'Volume Up', preventDefault: true});
+  useKeyboardShortcut(['arrowdown'], () => {
+    const newVol = Math.max(masterVol - 0.1, 0);
+    handleMasterVolChange(newVol);
+  }, {description: 'Volume down', preventDefault: true});
+
+  useKeyboardShortcut(['1'], () => toggleSound('white'), {description: 'Toggle White Noise', preventDefault: true});
+  useKeyboardShortcut(['2'], () => toggleSound('brown'), {description: 'Toggle Brown Noise', preventDefault: true});
+  useKeyboardShortcut(['3'], () => toggleSound('pink'), {description: 'Toggle Pink Noise', preventDefault: true});
+  useKeyboardShortcut(['4'], () => toggleSound('rain'), {description: 'Toggle Rain Noise', preventDefault: true});
+  useKeyboardShortcut(['5'], () => toggleSound('storm'), {description: 'Toggle Storm Noise', preventDefault: true});
+  useKeyboardShortcut(['6'], () => toggleSound('ocean'), {description: 'Toggle Ocean Noise', preventDefault: true});
+  useKeyboardShortcut(['7'], () => toggleSound('fire'), {description: 'Toggle Fire Noise', preventDefault: true});
+  useKeyboardShortcut(['4'], () => toggleSound('cafe'), {description: 'Toggle Cafe Noise', preventDefault: true});
+  useKeyboardShortcut(['4'], () => toggleSound('wind'), {description: 'Toggle Wind Noise', preventDefault: true});
 
   const springConfig = { type: "spring", bounce: 0, duration: 0.4 };
 
